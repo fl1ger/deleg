@@ -42,10 +42,6 @@ contributor:
     organization: Cloudflare
     email: christian@elmerot.se
 -
-    name: Dave Lawrence
-    organization: Salesforce
-    email: tale@dd.org
--
     name: Edward Lewis
     organization: ICANN
     email: edward.lewis@icann.org
