@@ -17,4 +17,4 @@ This requires that you have the necessary software installed.  See
 ## Contributing
 
 See the
-[guidelines for contributions](https://github.com/timapril/ns2/blob/master/CONTRIBUTING.md).
+[guidelines for contributions](https://github.com/fl1ger/deleg/blob/master/CONTRIBUTING.md).
