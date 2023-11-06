@@ -104,11 +104,11 @@ As the DNS has evolved over the past four decades, this has proven to be a barri
 
 The proposed DELEG record type remedies this problem by providing extensible parameters to describe what attributes a resolver would like to know about the the delegated authority, for example that it should be contacted using a different transport mechanism than the default udp/53.
 
-The DELEG record can use the SVCB alias form pointing to a different part in the domain tree to look for the additional information. This will be a regular SVCB record. It is proposed as a distinct record type to avoid the pitfalls that we have learned with having NS records appearing both above and below the zone cut.
+The record lives in harmony with the existing NS records and any DS records used to secure the delegation with DNSSEC, with all provided in the Authority section of DNS responses.  Legacy DNS resolvers would continue to use the NS and DS records, while resolvers that understand DELEG and its associated parameters can efficiently switch.  [This is our proposed best-case scenario, but still needs testing to confirm the assertion about legacy resolvers.  We have several other backup plans about how it could be facilitated if the Authority method proves troublesome.]
 
-Resolvers currently rely on the NS records in the parent and child zones to provide and confirm the nameservers that are authoritative for each zone. These are not extensible so any new feature with regards to delegation requires additional records like e.g was done with the introduction the DS record for DNSSEC.
+The DELEG record leverages the Service Binding (SVCB) record format defined in {{?I-D.draft-ietf-dnsop-svcb-https-12}}, using a subset of the already defined service parameters as well as new parameters described here.
 
-The DELEG record leverage the SVCB record format defined in {{?I-D.draft-ietf-dnsop-svcb-https-12}}, using a subset of the already defined service parameters as well as new parameters described here.
+By using an AliasMode inherited from SVCB, DELEG also allows a level of indirection to ease the operational maintenance of multiple zones by the same servers.  For example, an operator can have numerous customer domains all aliased to nameserver sets whose operational characteristics can be easily updated without intervention from the customers.  Most notably, we expect that this provides a method for addressing the long-standing problem operators have with maintaining DS records on behalf of their customers, though the solution for that use case will be handled in a separate draft.
 
 ## Terminology
 
