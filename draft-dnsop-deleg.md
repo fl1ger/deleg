@@ -102,13 +102,13 @@ In the Domain Name System [RFC1035], subtrees within the domain name hierachy ar
 
 As the DNS has evolved over the past four decades, this has proven to be a barrier for the efficient introduction of new DNS technology.  Many features that have been conceived come with additional overhead as they are constrained by the least common denominator of nameserver functionality.
 
-The proposed DELEG record type remedies this problem by providing extensible parameters to describe what attributes a resoler would like to know about the the delegated authority, for example that it should be contacted using a different transport mechanism than the default udp/53.
+The proposed DELEG record type remedies this problem by providing extensible parameters to describe what attributes a resolver would like to know about the the delegated authority, for example that it should be contacted using a different transport mechanism than the default udp/53.
 
-A companion record, currently inelegantly named simply DELEG2, provides a way to deploy this new authority using the same syntax.  This allows the new delegation functionality to be rolled out incrementally, even without support from the parent.   It is proposed as a distinct record type to avoid the pitfalls that we have learned with having NS records appearing both above and below the zone cut.
+The DELEG record can use the SVCB alias form pointing to a different part in the domain tree to look for the additional information. This will be a regular SVCB record. It is proposed as a distinct record type to avoid the pitfalls that we have learned with having NS records appearing both above and below the zone cut.
 
 Resolvers currently rely on the NS records in the parent and child zones to provide and confirm the nameservers that are authoritative for each zone. These are not extensible so any new feature with regards to delegation requires additional records like e.g was done with the introduction the DS record for DNSSEC.
 
-The DELEG and DELEG2 records leverage the SVCB record format defined in {{?I-D.draft-ietf-dnsop-svcb-https-00}}, using a subset of the already defined service parameters as well as new parameters described here.
+The DELEG record leverage the SVCB record format defined in {{?I-D.draft-ietf-dnsop-svcb-https-12}}, using a subset of the already defined service parameters as well as new parameters described here.
 
 ## Terminology
 
