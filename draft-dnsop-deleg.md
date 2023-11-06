@@ -30,16 +30,17 @@ author:
     name: Ralf Weber
     organization: Akamai Technologies
     email: rweber@akamai.com
+-
+    ins: D.Lawrence
+    name: David C Lawrence
+    organization: Salesforce
+    email: tale@dd.org
 
 contributor:
 -
     name: Christian Elmerot
     organization: Cloudflare
     email: christian@elmerot.se
--
-    name: Dave Lawrence
-    organization: Salesforce
-    email: tale@dd.org
 -
     name: Edward Lewis
     organization: ICANN
@@ -91,15 +92,36 @@ contributor:
 
 --- abstract
 
-Within the DNS, there is no way to delegate child domain to use newer or modern methods or transportation protocol. This draft proposes a new extensible DNS record type DELEG to allow delegation of a domain with additional capabilities.
+Authoritative control of parts of the Domain Name System namespace are indicated with a special record type that can only indicate the name of the server which a client resolver should contact for more information. Any other features of that server must then be discovered through other mechanisms.  This draft proposes a new extensible DNS record type, DELEG, which allows additional information about authoritative nameservers to be conveyed in the delegation.
 
 --- middle
 
 # Introduction
 
+In the Domain Name System [RFC1035], subtrees within the domain name hierachy are indicated be delegations to servers which are authoritative for their portion of the namespace.  The DNS records that do this, called NS records, can only represent the name of a nameserver.  Clients can expect nothing out of this delegated server other than it will answer DNS requests on UDP port 53.
+
+As the DNS has evolved over the past four decades, this has proven to be a barrier for the efficient introduction of new DNS technology.  Many features that have been conceived come with additional overhead as they are constrained by the least common denominator of nameserver functionality.
+
+The proposed DELEG record type remedies this problem by providing extensible parameters to describe what attributes a resoler would like to know about the the delegated authority, for example that it should be contacted using a different transport mechanism than the default udp/53.
+
+A companion record, currently inelegantly named simply DELEG2, provides a way to deploy this new authority using the same syntax.  This allows the new delegation functionality to be rolled out incrementally, even without support from the parent.   It is proposed as a distinct record type to avoid the pitfalls that we have learned with having NS records appearing both above and below the zone cut.
+
 Resolvers currently rely on the NS records in the parent and child zones to provide and confirm the nameservers that are authoritative for each zone. These are not extensible so any new feature with regards to delegation requires additional records like e.g was done with the introduction the DS record for DNSSEC.
 
-The DELEG records uses the SVCB record format defined in {{?I-D.draft-ietf-dnsop-svcb-https-00}}, using a subset of the already defined service parameters as well as new parameters described in this document.
+The DELEG and DELEG2 records leverage the SVCB record format defined in {{?I-D.draft-ietf-dnsop-svcb-https-00}}, using a subset of the already defined service parameters as well as new parameters described here.
+
+## Terminology
+
+The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+"SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and
+"OPTIONAL" in this document are to be interpreted as described in \\
+BCP 14 {{?RFC2119}} {{?RFC8174}} when, and only when, they appear in
+all capitals, as shown here.
+
+Terminology regarding the Domain Name System comes from {{?BCP219}}, with addition terms defined here:
+
+* [tbd]
+* [tbd]
 
 ## Reasoning for changing delegation
 
@@ -146,14 +168,6 @@ Later sections of this document will go into more detail on the resolution proce
 The primary goal of the DELEG records is to provide zone owners a way to signal to clients how to connect and validate a child domain that can coexist with NS records in the same zone, and do not break software that does not support them.
 
 The DELEG record is authortiative in the parent zone and if signed has to be signed with the key of the parent zone. The target of an alias record is an SVCB record that exists and can be signed in the zone it is pointed at, including the child zone.
-
-## Terminology
-
-The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
-"SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and
-"OPTIONAL" in this document are to be interpreted as described in \\
-BCP 14 {{?RFC2119}} {{?RFC8174}} when, and only when, they appear in
-all capitals, as shown here.
 
 # DELEG Record Type
 
