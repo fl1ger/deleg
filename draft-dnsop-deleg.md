@@ -36,6 +36,63 @@ author:
     organization: Salesforce
     email: tale@dd.org
 
+contributor:
+-
+    name: Christian Elmerot
+    organization: Cloudflare
+    email: christian@elmerot.se
+-
+    name: Dave Lawrence
+    organization: Salesforce
+    email: tale@dd.org
+-
+    name: Edward Lewis
+    organization: ICANN
+    email: edward.lewis@icann.org
+-
+    name: Shumon Huque
+    organization: Salesforce
+    email: shuque@gmail.com
+-
+    name: Klaus Darilion
+    organization: nic.at
+    email: klaus.darilion@nic.at
+-
+    name: Libor Peltan
+    organization: CZ.nic
+    email: libor.peltan@nic.cz
+-
+    name: Vladimír Čunát
+    organization: CZ.nic
+    email: vladimir.cunat@nic.cz
+-
+    name: Shane Kerr
+    organization: NS1
+    email: shane@time-travellers.org
+-
+    name: David Blacka
+    organization: Verisign
+    email: davidb@verisign.com
+-
+    name: George Michaelson
+    organization: APNIC
+    email: ggm@algebras.org
+-
+    name: Ben Schwartz
+    organization: Meta
+    email: bemasc@meta.com
+-
+    name: Jan Včelák
+    organization: NS1
+    email: jvcelak@ns1.com
+-
+    name: Peter van Dijk
+    organization: PowerDNS
+    email: peter.van.dijk@powerdns.com
+-
+    name: Philip Homburg
+    organization: NLnet Labs
+    email: philip@nlnetlabs.nl
 
 --- abstract
 
@@ -260,7 +317,35 @@ TODO: Fill this section out
 
 ## Resolution procedure
 
-TODO: full resolution using QNAME min asking for DELEG
+There are three ways of having a fallback safe way of resolving a delegating using the new DELEG record. We need to find out which is the most deployable by doing some testing. All of them introduce some new part in the the DNS query/response. They are:
+* Use a new EDNS flag in the query to indicate that you want to receive the new DELEG record so that authoritative name servers that support them can include them and others don't. DELEG records would only be send to resolvers using that EDNS flag putting it in the authority section. The failure case here would be the authoritative failing when getting the new EDNS flag.
+* Keep queries the same, but when answering with a referral put the DELEG record and possible signatures in the authority part of the response with the NS and DS records
+* Keep queries the same, but when answering put the DELEG records  and possible signatures in the additional section of the answer, while population authority only with NS and DS records
+
+Here is an example of DNS interactions simplified for a full resolution after priming for www.example.com query type AAAA with the com and example.com authoritative servers supporting DELEG and the root not. The example is without qname minimisation, but there is no difference when one would use that:
+
+* Ask www.example.com qtype AAAA to a.root-servers.net the answer is:
+    Answer section: (empty)
+    Authority section:
+        com.			172800	IN	NS	a.gtld-servers.net.
+    Additional section:
+        a.gtld-servers.net.	172800	IN	AAAA	2001:503:a83e::2:30
+* Ask www.example.com qtype AAAA to a.gtld-servers.net the answer is:
+        Answer section: (empty)
+        Authority section:
+            example.com.			172800	IN	NS	ns1.example.com.
+            example.com.			172800	IN	DELEG ( 1 config1.example.com.
+                                        ipv6hint=2a01:440:1:1f::24 )
+        Additional section:
+            ns1.example.com.	172800	IN	AAAA	2a01:4f8:a0:322c::35:42
+* Ask www.example.com qtype AAAA to config1.example.com (2a01:440:1:1f::24 ) the answer is:
+            Answer section:
+                www.example.com.		3600	IN	AAAA	2a01:4f8:a0:322c::2
+            Authority section: (empty)
+            Additional section: (empty)
+
+
+TODO: more resolution examples (e.g out of bailiwick)
 
 ### Connetion Failures
 
