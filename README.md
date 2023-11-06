@@ -1,6 +1,6 @@
-# Parameterized Nameserver Delegation with NS2 and NS2T
+#  Extensible Delegation for DNS
 
-This is the working area for the individual Internet-Draft, "Parameterized Nameserver Delegation with NS2 and NS2T".
+This is the working area for the Internet-Draft, "Extensible Delegation for DNS".
 
 ## Building the Draft
 
