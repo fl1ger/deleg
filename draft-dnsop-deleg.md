@@ -94,7 +94,7 @@ contributor:
     organization: Akamai Technologies
     email: erik+ietf@nygren.org
 -
-    name: Vandan Adhvaryu 
+    name: Vandan Adhvaryu
     organization: Team Internet
     email: vandan@adhvaryu.uk
 
@@ -145,9 +145,9 @@ Terminology regarding the Domain Name System comes from {{?BCP219}}, with additi
 To introduce DELEG record, this example shows a possible response from an authoritative in the authority section of the DNS response when delegating to another nameserver.
 
 
-    example.com.  86400  IN DELEG  1 config1.example.com. ( transports=dot
-                    dnsTlsFingerprints=["MIIS987SSLKJ...123==="
-                        "MII3SODKSLKJ...456==="]
+    example.com.  86400  IN DELEG  1 config1.example.com. (
+                    alpn=dot
+                    tlsa="2 0 1 ABC...,2 0 1 DEF..."
                     ipv4hint=192.0.2.54,192.0.2.56
                     ipv6hint=2001:db8:2423::3,2001:db8:2423::4 )
     example.com.  86400  IN NS     ns1.example.com.
@@ -155,18 +155,19 @@ To introduce DELEG record, this example shows a possible response from an author
     ns1.example.com     86400   IN  AAAA    2001:DB8::1
 
 In this example, the authoritative nameserver is delegating using DNS-over-TLS
-Like in SVCB, DELEG also offer the ability to use the Alias form delegation. The example below shows an example where example.com is being delegated with a DELEG AliasMode record which can then be further resolved using standard SVCB to locate the actual parameters.
+Like in SVCB, DELEG also offer the ability to use the AliasMode delegation. The example below shows an example where example.com is being delegated with a DELEG AliasMode record which can then be further resolved using standard SVCB to locate the actual parameters.
 
     example.com.  86400  IN DELEG 0   config2.example.net.
     example.com.  86400  IN NS     DELEG.example.net.
 
 The example.net authoritative server may return the following SVCB records in response to a query as directed by the above records.
 
-    config2.example.net 3600    IN SVCB . ( transports=dot
-                    dnsTlsFingerprints=["MIIS987SSLKJ...123==="]
+    config2.example.net 3600    IN SVCB . (
+                    alpn=dot
+                    tlsa="2 0 1 ABC..."
                     ipv4hint=192.0.2.54,192.0.2.56
                     ipv6hint=2001:db8:2423::3,2001:db8:2423::4
-                    ds=12345,13,1,DSFDSAFDSAFVCFSGFDSGDSAGFSA )
+                    ds="12345 13 1 DSFDSAFDSAFVCFSGFDSGDSAGFSA" )
 
 The above records indicate to the client that the actual configuration for the example.com zone can be found at config2.example.net
 
@@ -187,15 +188,15 @@ The SVCB record allows for two types of records, the AliasMode and the ServiceMo
 This document uses two different resource record types. Both records have the same functionality, with the difference between them being that the DELEG record MUST only be used at a delegation point, while the SVCB is used as a normal resource record and does not indicate that the label is being delegated. For example, take the following DELEG record:
 
     Zone com.:
-    example.com.  86400  IN DELEG 1   config2.example.net. ( transports=doq )
+    example.com.  86400  IN DELEG 1   config2.example.net. ( alpn=doq )
 
 When a client receives the above record, the resolver should send queries for any name under example.com to the nameserver at config2.example.net unless further delegated. By contrast, when presented with the records below:
 
     Zone com.:
     example.com.  86400  IN DELEG 0   config3.example.org.
-    
+
     Zone example.org.:
-    config3.example.org.  86400  IN SVCB 1 . ( transports=dot )
+    config3.example.org.  86400  IN SVCB 1 . ( alpn=dot )
 
 A resolver trying to resolve a name under example.com would get the first record above from the parent authoritative server, .COM, indicating that the SVCB records found at config3.example.org should be used to locate the authoritative nameservers of example.com, and other parameters.
 
@@ -207,12 +208,12 @@ It should be noted that both DELEG and SVCB records may exist for the same label
     example.com.  86400  IN DELEG 0   c1.example.org.
 
     Zone example.org.:
-    c1.example.org.  86400  IN DELEG  1   config3.example.net. ( transports=dot )
+    c1.example.org.  86400  IN DELEG  1   config3.example.net. ( alpn=dot )
     c1.example.org.  86400  IN NS test.c1.example.org.
     test.c1.example.org. 600 IN A 192.0.2.1
 
     Zone c1.example.org:
-    c1.example.org.  86400  IN SVCB 1   config2.example.net. ( transports=dot )
+    c1.example.org.  86400  IN SVCB 1   config2.example.net. ( alpn=dot )
     c1.example.org.  86400  IN NS test.c1.example.org.
     test.c1.example.org. 600 IN A 192.0.2.1
 
@@ -259,32 +260,37 @@ As defined in the SVCB document {{?RFC9460}}, the TargetName provides the hostna
 
 DRAFT NOTE: Should u-label and a-label be expanded? I'm leaning towards not expanding.
 
-### SvcParamKeys
+### SvcParams
 
-The following DNS SVCB parameters are defined for the DELEG and SVCB ServiceModes.
+All SvcParamKeys for the "dns" scheme {{!I-D.ietf-add-svcb-dns}} apply as specified.  These are the "transport parameters", describing how to reach an endpoint.
 
-#### "transports"
+DELEG also supports "delegation parameters", providing information about a logical delegation, independent of the transport.
 
-The "transports" SvcParamKey defines the list of transports offered by the nameserver named in the TargetName.
+The "alpn" transport parameter is OPTIONAL to include (unlike in SVCB-DNS, where it is generally required).  If the "alpn" SvcParamKey is omitted, the only available transport is presumed to be unencrypted DNS over UDP/TCP port 53.  Endpoints can indicate that insecure transport is not available by specifying "mandatory=alpn".
 
-The existing "alpn" SvcParamKey was not reused for DELEG due to the restriction that the "alpn" SvcParamValues are limited to those defined in the TLS Application-Layer Protocol Negotiation (ALPN) Protocol IDs registry. Plaintext DNS traffic is not, and should not be listed in that registry, but is required to support the transition to encrypted transport in DELEG and SVCB records.
+When TargetName is below the zone cut, DELEG ServiceMode records MUST include "ipv4hint" or "ipv6hint" SvcParamKeys.  These keys provide the address glue, which enables the initial connection to this endpoint.
 
-Below is a list of the transport values defined in this document:
+The following additional DNS SVCB parameters are defined for the DELEG and SVCB ServiceModes.
 
-* "do53": indicates that a server supports plaintext, unencrypted DNS traffic over UDP or TCP as defined in {{?RFC1035}} and {{?RFC1034}} and the updates to those RFCs.
-* "dot": indicates that the server supports encrypted DNS traffic over DNS-over-TLS as defined in {{?RFC7858}}.
-* "doh": indicates that the server supports encrypted DNS traffic over DNS-over-HTTPS as defined in {{?RFC8484}}. Records that use the DoH service form may be further redirected with HTTPS resource records in the delegated zone.  The DoH path is specified with a dohpath SvcParam as specified in {{?RFC9461}}.
-* "doq": indicates that the server supports encrypted DNS traffic via DNS-over-QUIC Connections as defined in {{?RFC9250}}
+#### "tlsa"
 
-The order of the keys in the list dictate the order in which the nameserver SHOULD be contacted. The client SHOULD compare the order of available transports with the set of transports it supports to determine how to contact the selected nameserver.
+The "tlsa" SvcParamKey is a transport parameter representing a TLSA RRset {{?RFC6698}} to be used when connecting to TargetName using a TLS-based transport. If present, this SvcParam SHOULD match the TLSA records published at TargetName. Due to bootstrapping concerns, this SvcParamKey has been added to the DELEG record as the TLSA records might only be resolveable after the initial connetion to the delegated nameserver was established. When this field is not present, certificate validation should be performed by either DANE or by traditional TLS certification validation using trusted root certification authorities.
 
-The presentation format of the SvcParamValue is a comma delimited quoted string of the available transport names. The wire format for the SvcParamValue is a string of 16-bit integers representing the TransportKey values as described in the "DELEG Transport Parameter Registry".
+The SvcParamValue is a value-list.  The presentation and wire format of each value is the same as the presentation and wire format described for the TLSA record as defined in {{?RFC6698}}, sections 2.1 and 2.2 respectively.
 
-#### "dnsTlsFingerprints"
+As a special case, the empty value indicates that the client MUST perform TLSA resolution and connect using DANE as described in {{!I-D.ietf-dnsop-svcb-dane}}.  The empty value MUST NOT be used in DELEG when TargetName is below the zone cut, as this would create a circular dependency.
 
-The "dnsTlsFingerprints" SvcParamKey is a list of fingerprints for the TLS certificates that may be presented by the nameserver. This record SHOULD match the TLSA record as described in {{?RFC6698}}. Due to bootstrapping concerns, this SvcParamKey has been added to the DELEG record as the TLSA records would only be resolveable after the initial connection to the delegated nameserver was established. When this field is not present, certificate validation should be performed by either DANE or by traditional TLS certification validation using trusted root certification authorities.
+This SvcParam is "automatically mandatory" (i.e. non-ignorable) in DELEG, and it MAY be used in any SVCB context where TLSA usage is defined.
 
-The presentation and wire format of the SvcParamValue is the same as the presentation and wire format described for the TLSA record as defined in {{?RFC6698}}, sections 2.1 and 2.2 respectively.
+#### "ds"
+
+The "ds" SvcParamKey is a delegation parameter representing a DS RRset.  For usage notes, see {{dnssec}}.
+
+The SvcParamValue is a value-list.  The presentation and wire format of each value is the same as the presentation and wire format described for the DS record as defined in {{?RFC4034}}, sections 5.3 and 5.1 respectively.
+
+If the "ds" SvcParamKey is omitted, the applicable DS RRset is the one that is present at the zone cut, if any.
+
+As a special case, the presentation value "disabled", corresponding to an empty value in wire format, indicates that there is no DS RRset for resolution to this delegated endpoint, even if a DS RRset is present at the zone cut.
 
 ## Deployment Considerations
 
@@ -312,10 +318,14 @@ If a zone operator removes all NS records before DELEG and SVCB records are impl
 For latency-conscious zones, the overall packet size of the delegation records from a parent zone to child zone should be taken into account when configuring the NS, DELEG and SVCB records. Resolvers that wish to receive DELEG and SVCB records in response SHOULD advertise and support a buffer size that is as large as possible, to allow the authoritative server to respond without truncating whenever possible.
 
 
-# DNSSEC and DELEG
+# DNSSEC and DELEG {#dnssec}
 
-Unlike NS records, DELEG records are always signed by the parent, similar to DS records.
+Unlike NS records, DELEG records are always signed by the parent if the parent zone is signed, similar to DS records.
 The SVCB records the DELEG record point to, are signed as normal record types in a signed child/leaf zone.
+
+If there are any DS records on the same name as a DELEG record, the authoritative server MUST include the DS records in the Authority section alongside the DELEG records.
+
+When using the "ds" SvcParamKey, each DELEG record MAY indicate different DS contents.  This allows delegation of a zone to multiple signers with different DNSKEYs, and allows those configurations to change independently.  Note that a zone is only as secure as its least secure "ds" SvcParam.
 
 # Privacy Considerations
 
@@ -367,45 +377,14 @@ The failure action when failing to resolve a name with DELEG/SVCB due to connect
 
 # IANA Considerations
 
-## New registry for DELEG transports
-
-The "DELEG Transport Parameter Registry" defines the namespace for parameters, including string representations and numeric values. This registry applies to the "transports" DNS SVCB format, currently impacting the DELEG RR Type.
-
-ACTION: create and include a reference to this registry.
-
-### Procedure
-
-A registration MUST include the following fields:
-
-* Name: The transport type key name
-* TransportKey: A numeric identifier (range 0-65535)
-
-* Meaning: a short description
-* Protocol Specification
-* Pointer to specification text
-
-### Initial Contents
-
-The "DELEG/SVCB Transport Parameter Registry" shall initially be populated with the registrations below:
-
-| TransportKey | Name | Meaning | Protocol Specification | Reference |
-|--------------|------|---------|------------------------|-----------|
-| 0            | key0 | Reserved| Reserved              | (This Document) |
-| 1            | do53 | Unencrypted, Plaintext DNS over UDP or TCP | RFC1035 | (This Document) |
-| 2            | dot | DNS-over-TLS | RFC7858             | (This Document) |
-| 3            | doh | DNS-over-HTTPS | RFC8484            | (This Document) |
-| 4            | doq | DNS over Dedicated QUIC Connections | {{?RFC9250}} |
-| 65280-65534  | keyNNNNN | Private Use | Private Use            | (This Document) |
-| 65535        | key65535 | Reserved| Reserved              | (This Document) |
-
 ## New SvcParamKey Values
 
 This document defines new SvcParamKey values in the "Service Binding (SVCB) Parameter Registry".
 
-| SvcParamKey | NAME | Meaning | Reference |
-|-------------|------|---------|-----------|
-| TBD1        | transports | | (This Document) |
-| TBD2        | dnsTlsFingerprints | | (This Document) |
+| SvcParamKey | NAME | Meaning    | Reference       |
+|-------------|------|------------|-----------------|
+| TBD1        | tlsa | TLSA RRset | (This Document) |
+| TBD2        | ds   | DS RRset   | (This Document) |
 
 --- back
 
@@ -422,7 +401,7 @@ RFC EDITOR:
 * Write a security considerations section
 * Add the dohpath references RFC
 * Define and give examples for DNSSEC svcparams
-* worked out resolution example including alias form delegation
+* worked out resolution example including AliasMode delegation
 * DoH URI teamplte does not include post
 
 
