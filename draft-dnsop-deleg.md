@@ -89,6 +89,10 @@ contributor:
     name: Philip Homburg
     organization: NLnet Labs
     email: philip@nlnetlabs.nl
+-
+    name: Erik Nygren
+    organization: Akamai Technologies
+    email: erik+ietf@nygren.org
 
 --- abstract
 
@@ -98,7 +102,7 @@ Authoritative control of parts of the Domain Name System namespace are indicated
 
 # Introduction
 
-In the Domain Name System [RFC1035], subtrees within the domain name hierachy are indicated be delegations to servers which are authoritative for their portion of the namespace.  The DNS records that do this, called NS records, can only represent the name of a nameserver.  Clients can expect nothing out of this delegated server other than it will answer DNS requests on UDP port 53.
+In the Domain Name System [RFC1035], subtrees within the domain name hierarchy are indicated be delegations to servers which are authoritative for their portion of the namespace.  The DNS records that do this, called NS records, can only represent the name of a nameserver.  Clients can expect nothing out of this delegated server other than it will answer DNS requests on UDP port 53.
 
 As the DNS has evolved over the past four decades, this has proven to be a barrier for the efficient introduction of new DNS technology.  Many features that have been conceived come with additional overhead as they are constrained by the least common denominator of nameserver functionality.
 
@@ -137,26 +141,26 @@ Terminology regarding the Domain Name System comes from {{?BCP219}}, with additi
 To introduce DELEG record, this example shows a possible response from an authoritative in the authority section of the DNS response when delegating to another nameserver.
 
 
-    example.com.  86400  IN DELEG  1 config1.example.com. ( transports=dot,
-                    dnsTlsFingerprints=["MIIS987SSLKJ...123===",
-                        "MII3SODKSLKJ...456==="],
-                    ipv4hint=34.23.34.54,24.45.23.78,
-                    ipv6hint=2a33:2423::3,2400:DEAD:BEEF::53 )
+    example.com.  86400  IN DELEG  1 config1.example.com. ( transports=dot
+                    dnsTlsFingerprints=["MIIS987SSLKJ...123==="
+                        "MII3SODKSLKJ...456==="]
+                    ipv4hint=192.0.2.54,192.0.2.56
+                    ipv6hint=2001:db8:2423::3,2001:db8:2423::4 )
     example.com.  86400  IN NS     ns1.example.com.
     ns1.example.com.    86400   IN  NS  192.0.2.1
 
 In this example, the authoritative nameserver is delegating using DNS-over-TLS
-Like in SVCB, DELEG also offer the ability to use the Alias form delegation. The example below shows an example where example.com is being delegated with a DELEG AliasForm record which can then be further resolved using standard SVCB to locate the actual parameters.
+Like in SVCB, DELEG also offer the ability to use the Alias form delegation. The example below shows an example where example.com is being delegated with a DELEG AliasMode record which can then be further resolved using standard SVCB to locate the actual parameters.
 
     example.com.  86400  IN DELEG 0   config2.example.net.
     example.com.  86400  IN NS     DELEG.example.net.
 
 The example.net authoritative server may return the following SVCB records in response to a query as directed by the above records.
 
-    config2.example.net 3600    IN SVCB . ( transports=dot,
-                    dnsTlsFingerprints=["MIIS987SSLKJ...123==="],
-                    ipv4hint=34.23.34.54,24.45.23.78,
-                    ipv6hint=2a33:2423::3,
+    config2.example.net 3600    IN SVCB . ( transports=dot
+                    dnsTlsFingerprints=["MIIS987SSLKJ...123==="]
+                    ipv4hint=192.0.2.54,192.0.2.56
+                    ipv6hint=2001:db8:2423::3,2001:db8:2423::4
                     ds=12345,13,1,DSFDSAFDSAFVCFSGFDSGDSAGFSA )
 
 The above records indicate to the client that the actual configuration for the example.com zone can be found at config2.example.net
@@ -167,11 +171,11 @@ Later sections of this document will go into more detail on the resolution proce
 
 The primary goal of the DELEG records is to provide zone owners a way to signal to clients how to connect and validate a child domain that can coexist with NS records in the same zone, and do not break software that does not support them.
 
-The DELEG record is authortiative in the parent zone and if signed has to be signed with the key of the parent zone. The target of an alias record is an SVCB record that exists and can be signed in the zone it is pointed at, including the child zone.
+The DELEG record is authoritative in the parent zone and if signed has to be signed with the key of the parent zone. The target of an alias record is an SVCB record that exists and can be signed in the zone it is pointed at, including the child zone.
 
 # DELEG Record Type
 
-The SVCB record allows for two types of records, the AliasForm and the ServiceForm. The DELEG record takes advantage of both and each will be described below in depth.
+The SVCB record allows for two types of records, the AliasMode and the ServiceMode. The DELEG record takes advantage of both and each will be described below in depth.
 
 ## Difference between the records
 
@@ -188,7 +192,7 @@ A resolver trying to resolve a name under example.com would get the first record
 
 The primary difference between the two records is that the DELEG record means that anything under the record label should be queried at the delegated server while the SVCB record is just for redirection purposes, and any names under the record's label should still be resolved using the same server unless otherwise delegated.
 
-It should be noted that both DELEG and SVCB records may exist for the same label, but they will be in differen zones Below is an example of this:
+It should be noted that both DELEG and SVCB records may exist for the same label, but they will be in different zones Below is an example of this:
 
     Zone example.com.:
     example.com.  86400  IN DELEG 0   c1.example.org.
@@ -201,12 +205,12 @@ It should be noted that both DELEG and SVCB records may exist for the same label
     c1.example.org.  86400  IN NS test.c1.example.org.
     test.c1.example.org. 600 IN A 192.0.2.1
 
-In the above case, the DELEG record for c1.example.org would only be used when trying to resolve names at or below c1.example.org. This is why when an AliasForm DELEG or SVCB record is encountered, the resolver MUST query for the SVCB record associated with the given name.
+In the above case, the DELEG record for c1.example.org would only be used when trying to resolve names at or below c1.example.org. This is why when an AliasMode DELEG or SVCB record is encountered, the resolver MUST query for the SVCB record associated with the given name.
 
 
-## AliasForm Record Type
+## AliasMode Record Type
 
-In order to take full advantage of the AliasForm of DELEG and SVCB, the parent, child and resolver must support these records. When supported, the use of the AliasForm will allow zone owners to delegate their zones to another operator with a single record in the parent. AliasForm SVCB records SHOULD appear in the child zone when used in the parent. If a resolver were to encounter an AliasForm DELEG or SVCB record, it would then resolve the name in the TargetName of the original record using SVCB RR type to receive the either another AliasForm record or a ServiceForm SVCB record.
+In order to take full advantage of the AliasMode of DELEG and SVCB, the parent, child and resolver must support these records. When supported, the use of the AliasMode will allow zone owners to delegate their zones to another operator with a single record in the parent. AliasMode SVCB records SHOULD appear in the child zone when used in the parent. If a resolver were to encounter an AliasMode DELEG or SVCB record, it would then resolve the name in the TargetName of the original record using SVCB RR type to receive the either another AliasMode record or a ServiceMode SVCB record.
 
 For example, if the name www.example.com was being resolved, the .com zone may issue a referral by returning the following record:
 
@@ -216,7 +220,7 @@ The above record would indicate to the resolver that in order to obtain the auth
 
 ### Multiple Service Providers
 
-Some zone owners may wish to use multiple providers to serve their zone, in which case multiple DELEG AliasForm records can be used. In the event that multiple DELEG AliasForm records are encountered, the resolver SHOULD treat those as a union the same way this is done with NS records, picking one at random for the first lookup and eventually discovering the others. How exactly DNS questions are directed and split between configuration sets is implementation specific:
+Some zone owners may wish to use multiple providers to serve their zone, in which case multiple DELEG AliasMode records can be used. In the event that multiple DELEG AliasMode records are encountered, the resolver SHOULD treat those as a union the same way this is done with NS records, picking one at random for the first lookup and eventually discovering the others. How exactly DNS questions are directed and split between configuration sets is implementation specific:
 
     example.com.    86400    IN  DELEG     0   config1.example.net.
     example.com.    86400    IN  DELEG     0   config1.example.org.
@@ -225,48 +229,49 @@ DRAFT NOTE: SVCB says that there "SHOULD only have a single RR". This ignores th
 
 ### Loop Prevention
 
-Special care should be taken by both the zone owner and the delegated zone operator to ensure that a lookup loop is not created by having two AliasForm records rely on each other to serve the zone. Doing so may result in a resolution loop, and likely a denial of service. Any clients implementing DELEG and SVCB MUST implement a per-resolution limit of how many AliasForm records may be traversed when looking up a delegation to prevent infinite looping. When a loop is detected, like with the handling of CNAME or NS, the server MUST respond to the client with SERVFAIL.
+Special care should be taken by both the zone owner and the delegated zone operator to ensure that a lookup loop is not created by having two AliasMode records rely on each other to serve the zone. Doing so may result in a resolution loop, and likely a denial of service. Any clients implementing DELEG and SVCB MUST implement a per-resolution limit of how many AliasMode records may be traversed when looking up a delegation to prevent infinite looping. When a loop is detected, like with the handling of CNAME or NS, the server MUST respond to the client with SERVFAIL.
 
-## ServiceForm Record Type
+## ServiceMode Record Type
 
-The ServiceForm of the DELEG and SVCB records are likely to be the more popular of the two. They work the same way as the SVCB or HTTPSSVC records do by providing a priority and list of parameters associated with the TargetName. In addition to being able to identify which protocols are supported by the authoriatative server, the ServiceForm record will also allow providers to operate different protocols on different addresses.
+The ServiceMode of the DELEG and SVCB records are likely to be the more popular of the two. They work the same way as the SVCB or HTTPS resource records do by providing a priority and list of parameters associated with the TargetName. In addition to being able to identify which protocols are supported by the authoritative server, the ServiceMode record will also allow providers to operate different protocols on different addresses.
 
-### SvcFieldPriority
+### SvcPriority
 
-As defined in the DNS SVCB document {{?I-D.draft-ietf-dnsop-svcb-httpssvc-00}}, the SvcFieldPriority values SHOULD be used to dictate the priority when multiple DELEG or SVCB records are returned.
+As defined in the DNS SVCB document {{?I-D.draft-ietf-dnsop-svcb-https}}, the SvcPriority values SHOULD be used to dictate the priority when multiple ServiceMode DELEG or SVCB records are returned.
 
 ### TargetName
 
-As defined in the SVCB document {{?I-D.draft-ietf-dnsop-svcb-httpssvc-00}}, the TargetName provides the hostname to which the DELEG or SVCB record refers. The TargetName field MUST be set and MUST NOT be "." for DELEG records. Records with a TargetName of "." SHOULD be discarded.
+As defined in the SVCB document {{?I-D.draft-ietf-dnsop-svcb-https}}, the TargetName provides the hostname to which the DELEG or SVCB record refers. The TargetName field MUST be set and MUST NOT be "." for DELEG records. Records with a TargetName of "." SHOULD be discarded.
 
 ^^^ Does that matter when IP hints are provided? I would think we don't need to name servers if we don't feel like it. (Of course TLS might require a name, but that's different story than DELEG itself.)
+^^^ Why don't we allow a TargetName for the A/AAAA records?  Always cramming them into hints will be awkward.
 
 DRAFT NOTE: Should u-label and a-label be expanded? I'm leaning towards not expanding.
 
 ### SvcParamKeys
 
-The following DNS SVCB parameters are defined for the DELEG and SVCB ServiceForms.
+The following DNS SVCB parameters are defined for the DELEG and SVCB ServiceModes.
 
 #### "transports"
 
 The "transports" SvcParamKey defines the list of transports offered by the nameserver named in the TargetName.
 
-The existing "alpn" SvcParamKey was not reused for DELEGdue to the restriction that the "alpn" SvcParamValues are limited to those defined in the TLS Application-Layer Protocol Negotiation (ALPN) Protocol IDs registry. Plaintext DNS traffic is not, and should not be listed in that registry, but is required to support the transition to encrypted transport in DELEG and SVCB records.
+The existing "alpn" SvcParamKey was not reused for DELEG due to the restriction that the "alpn" SvcParamValues are limited to those defined in the TLS Application-Layer Protocol Negotiation (ALPN) Protocol IDs registry. Plaintext DNS traffic is not, and should not be listed in that registry, but is required to support the transition to encrypted transport in DELEG and SVCB records.
 
 Below is a list of the transport values defined in this document:
 
 * "do53": indicates that a server supports plaintext, unencrypted DNS traffic over UDP or UDP as defined in {{?RFC1035}} and {{?RFC1034}} and the updates to those RFCs.
 * "dot": indicates that the server supports encrypted DNS traffic over DNS-over-TLS as defined in {{?RFC7858}}.
-* "doh": indicates that the server supports encrypted DNS traffic over DNS-over-HTTPS as defined in {{?RFC8484}}. Records that use the DoH service form may be further redirected with HTTPSSVC records in the delegated zone.
+* "doh": indicates that the server supports encrypted DNS traffic over DNS-over-HTTPS as defined in {{?RFC8484}}. Records that use the DoH service form may be further redirected with HTTPS resource records in the delegated zone.  The DoH path is specified with a dohpath SvcParam as specified in {{!I-D.draft-ietf-add-svcb-dns-09}}.
 * "doq": indicates that the server supports encrypted DNS traffic via DNS over QUIC Connections as defined in {{?RFC9250}}
 
 The order of the keys in the list dictate the order which the nameserver SHOULD be contacted in. The client SHOULD compare the order of available transports with the set of transports it supports to determine how to contact the selected nameserver.
 
-The presentation format of the SvcParamValue is a comma delimited quoted string of the available transport names. The wire format for the SvcParamValue is a string of 16-bit integers representing the TransportKey values as described in the "NS2/NS2T Transport Parameter Registry".
+The presentation format of the SvcParamValue is a comma delimited quoted string of the available transport names. The wire format for the SvcParamValue is a string of 16-bit integers representing the TransportKey values as described in the "DELEG Transport Parameter Registry".
 
 #### "dnsTlsFingerprints"
 
-The "dnsTlsFingerprints" SvcParamKey is a list of fingerprints for the TLS certificates that may be presented by the nameserver. This record SHOULD match the TLSA record as described in {{?RFC6698}}. Due to bootstrapping concerns, this SvcParamKey has been added to the DELEG record as the TLSA records would only be resolveable after the initial connetion to the delegated nameserver was established. When this field is not present, certificate validation should be performed by either DANE or by traditional TLS certification validation using trusted root certification authorities.
+The "dnsTlsFingerprints" SvcParamKey is a list of fingerprints for the TLS certificates that may be presented by the nameserver. This record SHOULD match the TLSA record as described in {{?RFC6698}}. Due to bootstrapping concerns, this SvcParamKey has been added to the DELEG record as the TLSA records would only be resolveable after the initial connection to the delegated nameserver was established. When this field is not present, certificate validation should be performed by either DANE or by traditional TLS certification validation using trusted root certification authorities.
 
 The presentation and wire format of the SvcParamValue is the same as the presentation and wire format described for the TLSA record as defined in {{?RFC6698}}, sections 2.1 and 2.2 respectively.
 
@@ -274,10 +279,10 @@ The presentation and wire format of the SvcParamValue is the same as the present
 
 The DELEG and SVCB records intends to replace the NS record while also adding additional functionality in order to support additional transports for the DNS. Below are discussions of considerations for deployment.
 
-### AliasForm and ServiceForm in the Parent
+### AliasMode and ServiceMode in the Parent
 
-Both the AliasForm and ServiceForm records MUST NOT be returned for the DELEG record.
-^^^ Why? I think ability to combine in-bailwick and out-of-bailwing NS names is normal thing and does not cause more trouble.
+Both the AliasMode and ServiceMode records MUST NOT be returned for the DELEG record.
+^^^ Why? I think ability to combine in-bailwick and out-of-bailiwick NS names is normal thing and does not cause more trouble.
 
 
 ### Rollout
@@ -285,7 +290,7 @@ Both the AliasForm and ServiceForm records MUST NOT be returned for the DELEG re
 When introduced, the DELEG and SVCB record will likely not be supported by the Root or second level operators, and may not be for some time. In the interim, zone owners may place these records into their zones. However this is only useful for further delegations down the tree as an SVCB record at the zone apex alone does not indicate a new delegation type. The only way to discover new delegations is with the DELEG record at the parent.
 
 
-DRAFT NOTE: Should we include something here that an authoritative MAY include DELEG records in the additionals section of responses to encourage resolvers to upgrade? What about an EDNS0 option from the authority to signal that it is capable of alternat transports?
+DRAFT NOTE: Should we include something here that an authoritative MAY include DELEG records in the additionals section of responses to encourage resolvers to upgrade? What about an EDNS0 option from the authority to signal that it is capable of alternate transports?
 
 ### Availability
 
@@ -301,7 +306,7 @@ For latency-conscious zones, the overall packet size of the delegation records f
 Unlike NS records DELEG records are always signed by the parent similar to DS records.
 SVCB records the DELEG record point to, are signed as normal record types in a signed child/leaf zone.
 
-# Privact Considerations
+# Privacy Considerations
 
 All of the information handled or transmitted by this protocol is public information published in the DNS.
 
@@ -318,36 +323,36 @@ There are three ways of having a fallback safe way of resolving a delegating usi
 * Keep queries the same, but when answering with a referral put the DELEG record and possible signatures in the authority part of the response with the NS and DS records
 * Keep queries the same, but when answering put the DELEG records  and possible signatures in the additional section of the answer, while population authority only with NS and DS records
 
-Here is an example of DNS interactions simplified for a full resolution after priming for www.example.com query type AAAA with the com and example.com authoritative servers supporting DELEG and the root not. The example is without qname minimisation, but there is no difference when one would use that:
+Here is an example of DNS interactions simplified for a full resolution after priming for www.example.com query type AAAA with the com and example.com authoritative servers supporting DELEG and the root not. The example is without qname minimization, but there is no difference when one would use that:
 
 * Ask www.example.com qtype AAAA to a.root-servers.net the answer is:
     Answer section: (empty)
     Authority section:
         com.			172800	IN	NS	a.gtld-servers.net.
     Additional section:
-        a.gtld-servers.net.	172800	IN	AAAA	2001:503:a83e::2:30
+        a.gtld-servers.net.	172800	IN	AAAA	2001:db8:a83e::2:30
 * Ask www.example.com qtype AAAA to a.gtld-servers.net the answer is:
         Answer section: (empty)
         Authority section:
             example.com.			172800	IN	NS	ns1.example.com.
             example.com.			172800	IN	DELEG ( 1 config1.example.com.
-                                        ipv6hint=2a01:440:1:1f::24 )
+                                        ipv6hint=2001:db8:440:1:1f::24 )
         Additional section:
-            ns1.example.com.	172800	IN	AAAA	2a01:4f8:a0:322c::35:42
-* Ask www.example.com qtype AAAA to config1.example.com (2a01:440:1:1f::24 ) the answer is:
+            ns1.example.com.	172800	IN	AAAA	2001:db8:322c::35:42
+* Ask www.example.com qtype AAAA to config1.example.com (2001:db8:1:1f::24 ) the answer is:
             Answer section:
-                www.example.com.		3600	IN	AAAA	2a01:4f8:a0:322c::2
+                www.example.com.		3600	IN	AAAA	2001:db8:a0:322c::2
             Authority section: (empty)
             Additional section: (empty)
 
 
 TODO: more resolution examples (e.g out of bailiwick)
 
-### Connetion Failures
+### Connection Failures
 
-When a resolver attempts to access nameserver delegated by a DELEG or SVCB record, if a connection error occurs, such as a certificate mismatch or unreachable server, the resolver SHOULD attempt to connect to the other nameservers delegated to until either exhausting the list or the resolver's policy indicates that they should treat the resoltion as failed.
+When a resolver attempts to access nameserver delegated by a DELEG or SVCB record, if a connection error occurs, such as a certificate mismatch or unreachable server, the resolver SHOULD attempt to connect to the other nameservers delegated to until either exhausting the list or the resolver's policy indicates that they should treat the resolution as failed.
 
-The failure action when failing to resolve a name with DELEG/SVCB due to connection erros is dependant on the resolver operators policies. For resolvers which strongly favor privacy, the operators may wish to return a SERVFAIL when the DELEG/SVCB resoltion process completes without successfully contacting a delegated nameserver(s) while opportunisitic privacy resolvers may wish to attempt resolution using any NS records that may be present.
+The failure action when failing to resolve a name with DELEG/SVCB due to connection errors is dependent on the resolver operators policies. For resolvers which strongly favor privacy, the operators may wish to return a SERVFAIL when the DELEG/SVCB resolution process completes without successfully contacting a delegated nameserver(s) while opportunistic privacy resolvers may wish to attempt resolution using any NS records that may be present.
 
 # IANA Considerations
 
@@ -393,7 +398,7 @@ This document defines new SvcParamKey values in the "Service Binding (SVCB) Para
 
 --- back
 
-# Acknowledgements
+# Acknowledgments
 
 This draft is heavily based on past work (draft-tapril-ns2) done by Tim April and thus extends the thanks to the people helping on this which are:
 John Levine, Erik Nygren, Jon Reed, Ben Kaduk, Mashooq Muhaimen, Jason Moreau, Jerrod Wiesman, Billy Tiemann, Gordon Marx and Brian Wellington.
