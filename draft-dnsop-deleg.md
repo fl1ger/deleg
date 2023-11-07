@@ -183,7 +183,7 @@ This document uses two different resource record types. Both records have the sa
 
     example.com.  86400  IN DELEG 1   config2.example.net. ( transports=doq )
 
-When a client receives the above record, the resolver should send queries for any name under example.com to the nameserver at config2.example.com unless further delegated. By contrast, when presented with the records below:
+When a client receives the above record, the resolver should send queries for any name under example.com to the nameserver at config2.example.net unless further delegated. By contrast, when presented with the records below:
 
     example.com.  86400  IN DELEG 0   config3.example.org.
     config3.example.org.  86400  IN SVCB 1 . ( transports=dot )
@@ -260,7 +260,7 @@ The existing "alpn" SvcParamKey was not reused for DELEG due to the restriction 
 
 Below is a list of the transport values defined in this document:
 
-* "do53": indicates that a server supports plaintext, unencrypted DNS traffic over UDP or UDP as defined in {{?RFC1035}} and {{?RFC1034}} and the updates to those RFCs.
+* "do53": indicates that a server supports plaintext, unencrypted DNS traffic over UDP or TCP as defined in {{?RFC1035}} and {{?RFC1034}} and the updates to those RFCs.
 * "dot": indicates that the server supports encrypted DNS traffic over DNS-over-TLS as defined in {{?RFC7858}}.
 * "doh": indicates that the server supports encrypted DNS traffic over DNS-over-HTTPS as defined in {{?RFC8484}}. Records that use the DoH service form may be further redirected with HTTPS resource records in the delegated zone.  The DoH path is specified with a dohpath SvcParam as specified in {{!I-D.draft-ietf-add-svcb-dns-09}}.
 * "doq": indicates that the server supports encrypted DNS traffic via DNS over QUIC Connections as defined in {{?RFC9250}}
