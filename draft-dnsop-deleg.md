@@ -185,11 +185,15 @@ The SVCB record allows for two types of records, the AliasMode and the ServiceMo
 
 This document uses two different resource record types. Both records have the same functionality, with the difference between them being that the DELEG record MUST only be used at a delegation point while the SVCB, is used as a normal resource record does not indicate that the label is being delegated. For example, take the following DELEG record:
 
+    Zone com.:
     example.com.  86400  IN DELEG 1   config2.example.net. ( transports=doq )
 
 When a client receives the above record, the resolver should send queries for any name under example.com to the nameserver at config2.example.net unless further delegated. By contrast, when presented with the records below:
 
+    Zone com.:
     example.com.  86400  IN DELEG 0   config3.example.org.
+    
+    Zone example.org.:
     config3.example.org.  86400  IN SVCB 1 . ( transports=dot )
 
 A resolver trying to resolve a name under example.com would get the first record above from the parent authoritative server, .COM, indicating that the SVCB records found at config3.example.org should be used to locate the authoritative nameservers of example.com, and other parameters.
@@ -198,11 +202,13 @@ The primary difference between the two records is that the DELEG record means th
 
 It should be noted that both DELEG and SVCB records may exist for the same label, but they will be in different zones Below is an example of this:
 
-    Zone example.com.:
+    Zone com.:
     example.com.  86400  IN DELEG 0   c1.example.org.
 
-    Zone .example.org.:
+    Zone example.org.:
     c1.example.org.  86400  IN DELEG  1   config3.example.net. ( transports=dot )
+    c1.example.org.  86400  IN NS test.c1.example.org.
+    test.c1.example.org. 600 IN A 192.0.2.1
 
     Zone c1.example.org
     c1.example.org.  86400  IN SVCB 1   config2.example.net. ( transports=dot )
