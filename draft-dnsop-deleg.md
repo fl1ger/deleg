@@ -274,19 +274,43 @@ The following additional DNS SVCB parameters are defined for the DELEG and SVCB 
 
 #### "tlsa"
 
-The "tlsa" SvcParamKey is a transport parameter representing a TLSA RRset {{?RFC6698}} to be used when connecting to TargetName using a TLS-based transport. If present, this SvcParam SHOULD match the TLSA records published at TargetName. Due to bootstrapping concerns, this SvcParamKey has been added to the DELEG record as the TLSA records might only be resolveable after the initial connetion to the delegated nameserver was established. When this field is not present, certificate validation should be performed by either DANE or by traditional TLS certification validation using trusted root certification authorities.
+The "tlsa" SvcParamKey is a transport parameter representing a TLSA RRset {{?RFC6698}} to be used when connecting to TargetName using a TLS-based transport. If present, this SvcParam SHOULD match the TLSA records whose base domain ({{?RFC6698, Section 3}}) is TargetName. Due to bootstrapping concerns, this SvcParamKey has been added to the DELEG record as the TLSA records might only be resolveable after the initial connection to the delegated nameserver was established. When this field is not present, certificate validation should be performed by either DANE or by traditional TLS certification validation using trusted root certification authorities.
 
-The SvcParamValue is a value-list.  The presentation and wire format of each value is the same as the presentation and wire format described for the TLSA record as defined in {{?RFC6698}}, sections 2.1 and 2.2 respectively.
+The SvcParamValue is a non-empty value-list.  The presentation and wire format of each value is the same as the presentation and wire format described for the TLSA record as defined in {{?RFC6698}}, sections 2.1 and 2.2 respectively.  To avoid wasting resources in the parent zone, matching type 0 (exact match) MUST NOT be used.
 
-As a special case, the empty value indicates that the client MUST perform TLSA resolution and connect using DANE as described in {{!I-D.ietf-dnsop-svcb-dane}}.  The empty value MUST NOT be used in DELEG when TargetName is below the zone cut, as this would create a circular dependency.
+As a special case, the presentation value "disabled", corresponding to an empty value in wire format, indicates that DANE MUST NOT be used with this record.
 
-This SvcParam is "automatically mandatory" (i.e. non-ignorable) in DELEG, and it MAY be used in any SVCB context where TLSA usage is defined.
+To avoid a circular dependency, "tlsa" MUST appear in any DELEG record that is used to serve its own TargetName.
+
+Resolvers MUST adopt one of the following behaviors:
+
+1. Use DANE for authentication, and treat any endpoints lacking DANE support as incompatible.
+1. Use PKI for authentication, and treat any DANE-only endpoint as incompatible.  Compatibility with `tlsa=disabled` endpoints is REQUIRED.
+1. Support both DANE and PKI for authentication, preferring DANE if it is available for each endpoint.
+
+This SvcParamKey MAY be used in any SVCB context where TLSA usage is defined.
+
+~~~
+;; The server is only authenticatable via DANE.  Any resolver that
+;; lacks DANE support will treat this record as incompatible.
+alpn=doq tlsa="..."
+
+;; The server is authenticatable via PKI.  If TLSA records exist at
+;; the SVCB-DANE owner names, it is also authenticatable via DANE.
+;; This record cannot be used to serve the zone containing its TargetName.
+alpn=doq
+
+;; The server is only authenticatable via PKI.  Any resolver that
+;; lacks PKI validation support will treat this record as incompatible.
+alpn=doq tlsa=disabled
+~~~
+{: title="tlsa SvcParam Examples for DELEG"}
 
 #### "ds"
 
 The "ds" SvcParamKey is a delegation parameter representing a DS RRset.  For usage notes, see {{dnssec}}.
 
-The SvcParamValue is a value-list.  The presentation and wire format of each value is the same as the presentation and wire format described for the DS record as defined in {{?RFC4034}}, sections 5.3 and 5.1 respectively.  When computing the digest, the DNSKEY Owner Name is always set to "." (i.e., the root), because this DS record approves the use of the specified DNSKEY on any zone that is delegated to this endpoint.
+The SvcParamValue is a non-empty value-list.  The presentation and wire format of each value is the same as the presentation and wire format described for the DS record as defined in {{?RFC4034}}, sections 5.3 and 5.1 respectively.  When computing the digest, the DNSKEY Owner Name is always set to "." (i.e., the root), because this DS record approves the use of the specified DNSKEY on any zone that is delegated to this endpoint.
 
 If the "ds" SvcParamKey is omitted, the applicable DS RRset is the one that is present at the zone cut, if any.
 
