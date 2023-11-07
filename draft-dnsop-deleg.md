@@ -106,7 +106,7 @@ Authoritative control of parts of the Domain Name System namespace are indicated
 
 # Introduction
 
-In the Domain Name System [RFC1035], subtrees within the domain name hierarchy are indicated be delegations to servers which are authoritative for their portion of the namespace.  The DNS records that do this, called NS records, can only represent the name of a nameserver.  Clients can expect nothing out of this delegated server other than it will answer DNS requests on UDP port 53.
+In the Domain Name System [RFC1035], subtrees within the domain name hierarchy are indicated by delegations to servers which are authoritative for their portion of the namespace.  The DNS records that do this, called NS records, can only represent the name of a nameserver.  Clients can expect nothing out of this delegated server other than it will answer DNS requests on UDP port 53.
 
 As the DNS has evolved over the past four decades, this has proven to be a barrier for the efficient introduction of new DNS technology.  Many features that have been conceived come with additional overhead as they are constrained by the least common denominator of nameserver functionality.
 
@@ -151,7 +151,8 @@ To introduce DELEG record, this example shows a possible response from an author
                     ipv4hint=192.0.2.54,192.0.2.56
                     ipv6hint=2001:db8:2423::3,2001:db8:2423::4 )
     example.com.  86400  IN NS     ns1.example.com.
-    ns1.example.com.    86400   IN  NS  192.0.2.1
+    ns1.example.com.    86400   IN  A  192.0.2.1
+    ns1.example.com     86400   IN  AAAA    2001:DB8::1
 
 In this example, the authoritative nameserver is delegating using DNS-over-TLS
 Like in SVCB, DELEG also offer the ability to use the Alias form delegation. The example below shows an example where example.com is being delegated with a DELEG AliasMode record which can then be further resolved using standard SVCB to locate the actual parameters.
@@ -183,7 +184,7 @@ The SVCB record allows for two types of records, the AliasMode and the ServiceMo
 
 ## Difference between the records
 
-This document uses two different resource record types. Both records have the same functionality, with the difference between them being that the DELEG record MUST only be used at a delegation point while the SVCB, is used as a normal resource record does not indicate that the label is being delegated. For example, take the following DELEG record:
+This document uses two different resource record types. Both records have the same functionality, with the difference between them being that the DELEG record MUST only be used at a delegation point, while the SVCB is used as a normal resource record and does not indicate that the label is being delegated. For example, take the following DELEG record:
 
     Zone com.:
     example.com.  86400  IN DELEG 1   config2.example.net. ( transports=doq )
@@ -200,7 +201,7 @@ A resolver trying to resolve a name under example.com would get the first record
 
 The primary difference between the two records is that the DELEG record means that anything under the record label should be queried at the delegated server while the SVCB record is just for redirection purposes, and any names under the record's label should still be resolved using the same server unless otherwise delegated.
 
-It should be noted that both DELEG and SVCB records may exist for the same label, but they will be in different zones Below is an example of this:
+It should be noted that both DELEG and SVCB records may exist for the same label, but they will be in different zones. Below is an example of this:
 
     Zone com.:
     example.com.  86400  IN DELEG 0   c1.example.org.
@@ -210,7 +211,7 @@ It should be noted that both DELEG and SVCB records may exist for the same label
     c1.example.org.  86400  IN NS test.c1.example.org.
     test.c1.example.org. 600 IN A 192.0.2.1
 
-    Zone c1.example.org
+    Zone c1.example.org:
     c1.example.org.  86400  IN SVCB 1   config2.example.net. ( transports=dot )
     c1.example.org.  86400  IN NS test.c1.example.org.
     test.c1.example.org. 600 IN A 192.0.2.1
@@ -220,7 +221,7 @@ In the above case, the DELEG record for c1.example.org would only be used when t
 
 ## AliasMode Record Type
 
-In order to take full advantage of the AliasMode of DELEG and SVCB, the parent, child and resolver must support these records. When supported, the use of the AliasMode will allow zone owners to delegate their zones to another operator with a single record in the parent. AliasMode SVCB records SHOULD appear in the child zone when used in the parent. If a resolver were to encounter an AliasMode DELEG or SVCB record, it would then resolve the name in the TargetName of the original record using SVCB RR type to receive the either another AliasMode record or a ServiceMode SVCB record.
+In order to take full advantage of the AliasMode of DELEG and SVCB, the parent, child and resolver must support these records. When supported, the use of the AliasMode will allow zone owners to delegate their zones to another operator with a single record in the parent. AliasMode SVCB records SHOULD appear in the child zone when used in the parent. If a resolver were to encounter an AliasMode DELEG or SVCB record, it would then resolve the name in the TargetName of the original record using SVCB RR type to receive either another AliasMode record or a ServiceMode SVCB record.
 
 For example, if the name www.example.com was being resolved, the .com zone may issue a referral by returning the following record:
 
@@ -273,9 +274,9 @@ Below is a list of the transport values defined in this document:
 * "do53": indicates that a server supports plaintext, unencrypted DNS traffic over UDP or TCP as defined in {{?RFC1035}} and {{?RFC1034}} and the updates to those RFCs.
 * "dot": indicates that the server supports encrypted DNS traffic over DNS-over-TLS as defined in {{?RFC7858}}.
 * "doh": indicates that the server supports encrypted DNS traffic over DNS-over-HTTPS as defined in {{?RFC8484}}. Records that use the DoH service form may be further redirected with HTTPS resource records in the delegated zone.  The DoH path is specified with a dohpath SvcParam as specified in {{?RFC9461}}.
-* "doq": indicates that the server supports encrypted DNS traffic via DNS over QUIC Connections as defined in {{?RFC9250}}
+* "doq": indicates that the server supports encrypted DNS traffic via DNS-over-QUIC Connections as defined in {{?RFC9250}}
 
-The order of the keys in the list dictate the order which the nameserver SHOULD be contacted in. The client SHOULD compare the order of available transports with the set of transports it supports to determine how to contact the selected nameserver.
+The order of the keys in the list dictate the order in which the nameserver SHOULD be contacted. The client SHOULD compare the order of available transports with the set of transports it supports to determine how to contact the selected nameserver.
 
 The presentation format of the SvcParamValue is a comma delimited quoted string of the available transport names. The wire format for the SvcParamValue is a string of 16-bit integers representing the TransportKey values as described in the "DELEG Transport Parameter Registry".
 
@@ -313,8 +314,8 @@ For latency-conscious zones, the overall packet size of the delegation records f
 
 # DNSSEC and DELEG
 
-Unlike NS records DELEG records are always signed by the parent similar to DS records.
-SVCB records the DELEG record point to, are signed as normal record types in a signed child/leaf zone.
+Unlike NS records, DELEG records are always signed by the parent, similar to DS records.
+The SVCB records the DELEG record point to, are signed as normal record types in a signed child/leaf zone.
 
 # Privacy Considerations
 
@@ -328,7 +329,7 @@ TODO: Fill this section out
 
 ## Resolution procedure
 
-There are three ways of having a fallback safe way of resolving a delegating using the new DELEG record. We need to find out which is the most deployable by doing some testing. All of them introduce some new part in the the DNS query/response. They are:
+There are three ways of having a fallback safe way of resolving a delegating using the new DELEG record. We need to find out which is the most deployable by doing some testing. All of them introduce some new part in the DNS query/response. They are:
 * Use a new EDNS flag in the query to indicate that you want to receive the new DELEG record so that authoritative name servers that support them can include them and others don't. DELEG records would only be send to resolvers using that EDNS flag putting it in the authority section. The failure case here would be the authoritative failing when getting the new EDNS flag.
 * Keep queries the same, but when answering with a referral put the DELEG record and possible signatures in the authority part of the response with the NS and DS records
 * Keep queries the same, but when answering put the DELEG records  and possible signatures in the additional section of the answer, while population authority only with NS and DS records
@@ -345,11 +346,11 @@ Here is an example of DNS interactions simplified for a full resolution after pr
         Answer section: (empty)
         Authority section:
             example.com.			172800	IN	NS	ns1.example.com.
-            example.com.			172800	IN	DELEG ( 1 config1.example.com.
-                                        ipv6hint=2001:db8:440:1:1f::24 )
+            example.com.			172800	IN	DELEG   1 config1.example.com.
+                                        ( ipv6hint=2001:db8:440:1:1f::24 )
         Additional section:
             ns1.example.com.	172800	IN	AAAA	2001:db8:322c::35:42
-* Ask www.example.com qtype AAAA to config1.example.com (2001:db8:1:1f::24 ) the answer is:
+* Ask www.example.com qtype AAAA to config1.example.com (2001:db8:1:1f::24) the answer is:
             Answer section:
                 www.example.com.		3600	IN	AAAA	2001:db8:a0:322c::2
             Authority section: (empty)
