@@ -286,11 +286,13 @@ This SvcParam is "automatically mandatory" (i.e. non-ignorable) in DELEG, and it
 
 The "ds" SvcParamKey is a delegation parameter representing a DS RRset.  For usage notes, see {{dnssec}}.
 
-The SvcParamValue is a value-list.  The presentation and wire format of each value is the same as the presentation and wire format described for the DS record as defined in {{?RFC4034}}, sections 5.3 and 5.1 respectively.
+The SvcParamValue is a value-list.  The presentation and wire format of each value is the same as the presentation and wire format described for the DS record as defined in {{?RFC4034}}, sections 5.3 and 5.1 respectively.  When computing the digest, the DNSKEY Owner Name is always set to "." (i.e., the root), because this DS record approves the use of the specified DNSKEY on any zone that is delegated to this endpoint.
 
 If the "ds" SvcParamKey is omitted, the applicable DS RRset is the one that is present at the zone cut, if any.
 
 As a special case, the presentation value "disabled", corresponding to an empty value in wire format, indicates that there is no DS RRset for resolution to this delegated endpoint, even if a DS RRset is present at the zone cut.
+
+This SvcParam is "automatically mandatory" (i.e. non-ignorable) in DELEG for validating resolvers.
 
 ## Deployment Considerations
 
