@@ -110,7 +110,7 @@ The proposed DELEG record type remedies this problem by providing extensible par
 
 The record lives in harmony with the existing NS records and any DS records used to secure the delegation with DNSSEC, with all provided in the Authority section of DNS responses.  Legacy DNS resolvers would continue to use the NS and DS records, while resolvers that understand DELEG and its associated parameters can efficiently switch.  [This is our proposed best-case scenario, but still needs testing to confirm the assertion about legacy resolvers.  We have several other backup plans about how it could be facilitated if the Authority method proves troublesome.]
 
-The DELEG record leverages the Service Binding (SVCB) record format defined in {{?I-D.draft-ietf-dnsop-svcb-https-12}}, using a subset of the already defined service parameters as well as new parameters described here.
+The DELEG record leverages the Service Binding (SVCB) record format defined in {{?RFC9460}}, using a subset of the already defined service parameters as well as new parameters described here.
 
 By using an AliasMode inherited from SVCB, DELEG also allows a level of indirection to ease the operational maintenance of multiple zones by the same servers.  For example, an operator can have numerous customer domains all aliased to nameserver sets whose operational characteristics can be easily updated without intervention from the customers.  Most notably, we expect that this provides a method for addressing the long-standing problem operators have with maintaining DS records on behalf of their customers, though the solution for that use case will be handled in a separate draft.
 
@@ -237,11 +237,11 @@ The ServiceMode of the DELEG and SVCB records are likely to be the more popular 
 
 ### SvcPriority
 
-As defined in the DNS SVCB document {{?I-D.draft-ietf-dnsop-svcb-https}}, the SvcPriority values SHOULD be used to dictate the priority when multiple ServiceMode DELEG or SVCB records are returned.
+As defined in the DNS SVCB document {{?RFC9460}}, the SvcPriority values SHOULD be used to dictate the priority when multiple ServiceMode DELEG or SVCB records are returned.
 
 ### TargetName
 
-As defined in the SVCB document {{?I-D.draft-ietf-dnsop-svcb-https}}, the TargetName provides the hostname to which the DELEG or SVCB record refers. The TargetName field MUST be set and MUST NOT be "." for DELEG records. Records with a TargetName of "." SHOULD be discarded.
+As defined in the SVCB document {{?RFC9460}}, the TargetName provides the hostname to which the DELEG or SVCB record refers. The TargetName field MUST be set and MUST NOT be "." for DELEG records. Records with a TargetName of "." SHOULD be discarded.
 
 ^^^ Does that matter when IP hints are provided? I would think we don't need to name servers if we don't feel like it. (Of course TLS might require a name, but that's different story than DELEG itself.)
 ^^^ Why don't we allow a TargetName for the A/AAAA records?  Always cramming them into hints will be awkward.
@@ -262,7 +262,7 @@ Below is a list of the transport values defined in this document:
 
 * "do53": indicates that a server supports plaintext, unencrypted DNS traffic over UDP or TCP as defined in {{?RFC1035}} and {{?RFC1034}} and the updates to those RFCs.
 * "dot": indicates that the server supports encrypted DNS traffic over DNS-over-TLS as defined in {{?RFC7858}}.
-* "doh": indicates that the server supports encrypted DNS traffic over DNS-over-HTTPS as defined in {{?RFC8484}}. Records that use the DoH service form may be further redirected with HTTPS resource records in the delegated zone.  The DoH path is specified with a dohpath SvcParam as specified in {{!I-D.draft-ietf-add-svcb-dns-09}}.
+* "doh": indicates that the server supports encrypted DNS traffic over DNS-over-HTTPS as defined in {{?RFC8484}}. Records that use the DoH service form may be further redirected with HTTPS resource records in the delegated zone.  The DoH path is specified with a dohpath SvcParam as specified in {{?RFC9461}}.
 * "doq": indicates that the server supports encrypted DNS traffic via DNS over QUIC Connections as defined in {{?RFC9250}}
 
 The order of the keys in the list dictate the order which the nameserver SHOULD be contacted in. The client SHOULD compare the order of available transports with the set of transports it supports to determine how to contact the selected nameserver.
