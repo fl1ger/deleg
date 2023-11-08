@@ -193,7 +193,7 @@ When a client receives the above record, the resolver should send queries for an
 
     Zone com.:
     example.com.  86400  IN DELEG 0   config3.example.org.
-    
+
     Zone example.org.:
     config3.example.org.  86400  IN SVCB 1 . ( transports=dot )
 
@@ -364,6 +364,37 @@ TODO: more resolution examples (e.g out of bailiwick)
 When a resolver attempts to access nameserver delegated by a DELEG or SVCB record, if a connection error occurs, such as a certificate mismatch or unreachable server, the resolver SHOULD attempt to connect to the other nameservers delegated to until either exhausting the list or the resolver's policy indicates that they should treat the resolution as failed.
 
 The failure action when failing to resolve a name with DELEG/SVCB due to connection errors is dependent on the resolver operators policies. For resolvers which strongly favor privacy, the operators may wish to return a SERVFAIL when the DELEG/SVCB resolution process completes without successfully contacting a delegated nameserver(s) while opportunistic privacy resolvers may wish to attempt resolution using any NS records that may be present.
+
+
+### Missing SVCB at delagated nameserver
+
+When a resolver attempts to resolve the SVCB record from a delegated nameserver after following a previously retrieved AliasMode DELEG record, and such requests gets NXDOMAIN or NOERROR/NODATA answer, the resolver should consider the delegated nameserver misconfigured and MUST fallback to using the NS records from the parent zone.
+
+If multiple DELEG records are available, the resolver MUST first attempt to find a valid delegated nameserver before falling back to NS records.
+
+    Zone com.:
+	example.com.	86400	IN	DELEG	0	c1.example.org.
+	example.com.	86400	IN  NS	ns1.example.com.
+    ns1.example.com.	3600	IN	A	192.0.2.1
+
+    Zone example.org.:
+    c1.example.org. 600 IN A 192.0.2.2
+
+In the above case, a resolver MUST fallback to using the nameserver ns1.example.com.
+
+    Zone com.:
+	example.com.	86400	IN	DELEG	0	c1.example.org.
+	example.com.	86400	IN	DELEG	0	c2.example.net.
+	example.com.	86400	IN  NS	ns1.example.com.
+    ns1.example.com.	3600	IN	A	192.0.2.1
+
+    Zone example.org.:
+    c1.example.org. 600 IN A 192.0.2.2
+
+	Zone example.net.:
+	c2.example.net.	86400	SVCB	1	config2.example.net. ( transports=dot )
+
+In the above case, a resolver MUST use the SVCB record available at c2.example.net.
 
 # IANA Considerations
 
