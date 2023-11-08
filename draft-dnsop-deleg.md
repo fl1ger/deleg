@@ -282,10 +282,10 @@ As a special case, the presentation value "disabled", corresponding to an empty 
 
 To avoid a circular dependency, "tlsa" MUST appear in any DELEG record that is used to serve its own TargetName.
 
-Resolvers MUST adopt one of the following behaviors:
+Resolvers that support TLS-based transports MUST adopt one of the following behaviors:
 
 1. Use DANE for authentication, and treat any endpoints lacking DANE support as incompatible.
-1. Use PKI for authentication, and treat any DANE-only endpoint as incompatible.  Compatibility with `tlsa=disabled` endpoints is REQUIRED.
+1. Use PKI for authentication, and treat any DANE-only endpoint as incompatible.  In this behavior, compatibility with `tlsa=disabled` endpoints is REQUIRED.
 1. Support both DANE and PKI for authentication, preferring DANE if it is available for each endpoint.
 
 This SvcParamKey MAY be used in any SVCB context where TLSA usage is defined.
@@ -293,6 +293,11 @@ This SvcParamKey MAY be used in any SVCB context where TLSA usage is defined.
 ~~~
 ;; The server is only authenticatable via DANE.  Any resolver that
 ;; lacks DANE support will treat this record as incompatible.
+alpn=doq tlsa="..." mandatory=alpn
+
+;; The server is only authenticatable via DANE, but also offers Do53
+;; services.  All resolvers can access it, but only resolvers with
+;; DANE support will use DoQ.
 alpn=doq tlsa="..."
 
 ;; The server is authenticatable via PKI.  If TLSA records exist at
@@ -302,7 +307,7 @@ alpn=doq
 
 ;; The server is only authenticatable via PKI.  Any resolver that
 ;; lacks PKI validation support will treat this record as incompatible.
-alpn=doq tlsa=disabled
+alpn=doq tlsa=disabled mandatory=alpn
 ~~~
 {: title="tlsa SvcParam Examples for DELEG"}
 
