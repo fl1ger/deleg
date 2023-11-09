@@ -106,7 +106,7 @@ Authoritative control of parts of the Domain Name System namespace are indicated
 
 # Introduction
 
-In the Domain Name System [RFC1035], subtrees within the domain name hierarchy are indicated by delegations to servers which are authoritative for their portion of the namespace.  The DNS records that do this, called NS records, can only represent the name of a nameserver.  Clients can expect nothing out of this delegated server other than it will answer DNS requests on UDP port 53.
+In the Domain Name System [STD13], subtrees within the domain name hierarchy are indicated by delegations to servers which are authoritative for their portion of the namespace.  The DNS records that do this, called NS records, can only represent the name of a nameserver.  Clients can expect nothing out of this delegated server other than it will answer DNS requests on UDP port 53.
 
 As the DNS has evolved over the past four decades, this has proven to be a barrier for the efficient introduction of new DNS technology.  Many features that have been conceived come with additional overhead as they are constrained by the least common denominator of nameserver functionality.
 
