@@ -94,7 +94,7 @@ contributor:
     organization: Akamai Technologies
     email: erik+ietf@nygren.org
 -
-    name: Vandan Adhvaryu 
+    name: Vandan Adhvaryu
     organization: Team Internet
     email: vandan@adhvaryu.uk
 
@@ -366,11 +366,11 @@ When a resolver attempts to access nameserver delegated by a DELEG or SVCB recor
 The failure action when failing to resolve a name with DELEG/SVCB due to connection errors is dependent on the resolver operators policies. For resolvers which strongly favor privacy, the operators may wish to return a SERVFAIL when the DELEG/SVCB resolution process completes without successfully contacting a delegated nameserver(s) while opportunistic privacy resolvers may wish to attempt resolution using any NS records that may be present.
 
 
-### Missing SVCB at delagated nameserver
+### Missing SVCB at delegated nameserver
 
 When a resolver attempts to resolve the SVCB record from a delegated nameserver after following a previously retrieved AliasMode DELEG record, and such requests gets NXDOMAIN or NOERROR/NODATA answer, the resolver should consider the delegated nameserver misconfigured and MUST fallback to using the NS records from the parent zone.
 
-If multiple DELEG records are available, the resolver MUST first attempt to find a valid delegated nameserver before falling back to NS records.
+If multiple DELEG records are available, the resolver MUST first attempt to find a compatible ServiceMode record before falling back to NS records.
 
     Zone com.:
 	example.com.	86400	IN	DELEG	0	c1.example.org.
