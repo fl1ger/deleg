@@ -100,19 +100,19 @@ contributor:
 
 --- abstract
 
-Authoritative control of parts of the Domain Name System namespace are indicated with a special record type that can only indicate the name of the server which a client resolver should contact for more information. Any other features of that server must then be discovered through other mechanisms.  This draft proposes a new extensible DNS record type, DELEG, which allows additional information about authoritative nameservers to be conveyed in the delegation.
+Authoritative control of parts of the Domain Name System namespace are indicated with a special record type, the NS record, that can only indicate the name of the server which a client resolver should contact for more information. Any other features of that server must then be discovered through other mechanisms.  This draft proposes a new extensible DNS record type, DELEG, which allows additional information about authoritative nameservers to be conveyed in the delegation.
 
 --- middle
 
 # Introduction
 
-In the Domain Name System [STD13], subtrees within the domain name hierarchy are indicated by delegations to servers which are authoritative for their portion of the namespace.  The DNS records that do this, called NS records, can only represent the name of a nameserver.  Clients can expect nothing out of this delegated server other than it will answer DNS requests on UDP port 53.
+In the Domain Name System {{?STD13}}, subtrees within the domain name hierarchy are indicated by delegations to servers which are authoritative for their portion of the namespace.  The DNS records that do this, called NS records, can only represent the name of a nameserver.  Clients can expect nothing out of this delegated server other than that it will answer DNS requests on UDP port 53.
 
 As the DNS has evolved over the past four decades, this has proven to be a barrier for the efficient introduction of new DNS technology.  Many features that have been conceived come with additional overhead as they are constrained by the least common denominator of nameserver functionality.
 
 The proposed DELEG record type remedies this problem by providing extensible parameters to describe what attributes a resolver would like to know about the the delegated authority, for example that it should be contacted using a different transport mechanism than the default udp/53.
 
-The record lives in harmony with the existing NS records and any DS records used to secure the delegation with DNSSEC, with all provided in the Authority section of DNS responses.  Legacy DNS resolvers would continue to use the NS and DS records, while resolvers that understand DELEG and its associated parameters can efficiently switch.  [This is our proposed best-case scenario, but still needs testing to confirm the assertion about legacy resolvers.  We have several other backup plans about how it could be facilitated if the Authority method proves troublesome.]
+The record lives in harmony with the existing NS records and any DS records used to secure the delegation with DNSSEC, with all three types provided in the Authority section of DNS responses.  Legacy DNS resolvers would continue to use the NS and DS records, while resolvers that understand DELEG and its associated parameters can efficiently switch.  [This is our proposed best-case scenario, but still needs testing to confirm the assertion about legacy resolvers.  We have several other backup plans about how it could be facilitated if the Authority method proves troublesome.]
 
 The DELEG record leverages the Service Binding (SVCB) record format defined in {{?RFC9460}}, using a subset of the already defined service parameters.
 
@@ -131,14 +131,23 @@ Terminology regarding the Domain Name System comes from {{?BCP219}}, with additi
 * [tbd]
 * [tbd]
 
-## Reasoning for changing delegation
+## Motivation
 
-* The current DNS protocol does not allow secure upgrade to new transport mechanisms between auth and resolver - e.g. authenticated DNS-over-TLS from resolver to auth.
-* The current delegation with NS and glue records requires a leap of faith because these records are not signed. Spoofed delegation can be detected eventually if the domain is signed, but only after traffic is (potentially) sent to the attacker’s endpoint.
-* There	is no secure way to signal in delegation what capabilities authoritative servers support. The client cannot rely on any new behavior and currently must resort to trial-and-error with EDNS which is unsigned.
-* DNS operators don’t have a formal role in the current system. Consequently, registries/registrars generally don’t talk to operators and users must act as go-between and make technical changes they don’t understand.
-    * Asking domain owners to add new NS records, modify DS records when rolling keys etc. This is very inflexible when an operator needs to make technical changes.
+There is currently no secure way within the DNS protocol to signal what capabilities authoritative nameservers support. Resolvers have had to use out-of-band configuration or trial-and-error probing to use new features.  While EDNS {{?REF}} is available as an extensible mechanism for capability signalling, EDNS records are not signed and are thus unreliable.
 
+Lacking authenticatable capability signalling, the DNS protocol does not easily allow secure upgrade to new transport mechanisms between authority servers and resolvers, such as to use authenticated DNS-over-TLS {{?RFC7858}}.
+
+Delegations via NS and glue address records require a leap of faith, because neither the NS records nor the glue is cryptographically signed for secure validation.  While the DNSSEC DS record ultimately secures the chain of trust to confirm delegated servers, spoofed delegations can still cause resolver questions to be directed to the spoofed servers.
+
+While third-party operators have long been part of the reality of how the DNS works, the ICANN "3R" model of Registry, Registrar, and Registrant does not formally recognize the operator role as its own entity who can interact with either registrar or registry on behalf of the registrant.  Various aspects of maintaining delegation information has relied on the registrant needing to take action with their registrar, to be pushed from the registrar into the registry.  This is especially difficult when the registrant is looking to outsource essentially all DNS knowledge.
+
+This inefficiency exposes itself in two troublesome ways.  The first has been a practical operational issue for years. The DNSSEC DS record, which is not meant to be indefinitely static, is generated by the operator.  While some methods have been standardized to address how the operator could publish updates to the registry {{?REF}} these have not been widely deployed.
+
+The second issue has been that relying on new features to be deployed via registrar development has hindered DNS protocol development.  This is again demonstrated by the DS record, which some registrars still do not support, decades after its standardization, even when fronting for registries that support DNSSEC.
+
+We reccognize that this proposal runs headlong into the second issue, but believe it will provide powerful motivation as a "one and done" solution for the extensibility of the parent side of a delegation.  Enabling powerful new features in the DNS, early discussions with a people from a wide variety of consituencies has indicated a high degree of interest in implementing this solution.
+
+[Add some constituency examples here?]
 
 ## Introductory Examples
 
