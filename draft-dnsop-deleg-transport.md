@@ -97,6 +97,10 @@ contributor:
     name: Vandan Adhvaryu
     organization: Team Internet
     email: vandan@adhvaryu.uk
+-
+    name: Manu Bretelle
+    organization: Meta
+    email: chantr4@gmail.com
 
 --- abstract
 
