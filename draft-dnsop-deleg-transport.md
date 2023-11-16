@@ -225,7 +225,7 @@ Thus, as with authority server selection for NS records, a resolver is free to u
 
 If a connection error occurs when a resolver attempts to access a nameserver delegated to by a DELEG or SVCB record, such as with a certificate mismatch or by being unreachable, the resolver SHOULD attempt to connect to the other nameservers in the DELEG/SVCB RRset to until either exhausting the list or the resolver's policy indicates that they should treat the resolution as failed.
 
-For resolvers that strongly favor privacy, operators may wish to return a SERVFAIL when all attempts to use privacy-enhanced alpns in the DELEG/SVCB resolution process have failed. More permissive resolvers can fall back to using the legacy DNS resolution process via NS records.
+Operators MAY return SERVFAIL when all attempts to use the DELEG/SVCB resolution process have failed.  This might have privacy benefits, especially if the DELEG records only offer encrypted transports.  More permissive resolvers can fall back to using the legacy DNS resolution process via NS records.
 
 ## Deployment Considerations
 
