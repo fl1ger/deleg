@@ -253,7 +253,7 @@ The DELEG and SVCB records intends to replace the NS record while also adding ad
 
 ### AliasMode and ServiceMode in the Parent
 
-Both the AliasMode and ServiceMode records can be returned for the DELEG record from the parent. This is differernt from the SCVB  {{?RFC9460}} specification and only applies for the DELEG RRSet in the parent.
+Both the AliasMode and ServiceMode records can be returned for the DELEG record from the parent. This is different from the SCVB  {{?RFC9460}} specification and only applies for the DELEG RRSet in the parent.
 
 
 ### Rollout
@@ -290,7 +290,7 @@ TODO: Fill this section out
 ## Resolution procedure
 
 There are three ways of having a fallback safe way of resolving a delegating using the new DELEG record. We need to find out which is the most deployable by doing some testing. All of them introduce some new part in the DNS query/response. They are:
-* Use a new EDNS flag in the query to indicate that you want to receive the new DELEG record so that authoritative name servers that support them can include them and others don't. DELEG records would only be send to resolvers using that EDNS flag putting it in the authority section. The failure case here would be the authoritative failing when getting the new EDNS flag.
+* Use a new EDNS flag in the query to indicate that you want to receive the new DELEG record so that authoritative name servers that support them can include them and others don't. DELEG records would only be sent to resolvers using that EDNS flag putting it in the authority section. The failure case here would be the authoritative failing when getting the new EDNS flag.
 * Keep queries the same, but when answering with a referral put the DELEG record and possible signatures in the authority part of the response with the NS and DS records
 * Keep queries the same, but when answering put the DELEG records  and possible signatures in the additional section of the answer, while population authority only with NS and DS records
 
@@ -321,7 +321,7 @@ TODO: more resolution examples (e.g out of bailiwick)
 
 ### Failures when DELEG delegation is present
 
-When a delegation using DELEG to a child is present the resolver MUST use it and SERVFAIL if none of the configurations provided work.
+When a delegation using DELEG to a child is present, the resolver MUST use it and SERVFAIL if none of the configurations provided work.
 
 # IANA Considerations
 
