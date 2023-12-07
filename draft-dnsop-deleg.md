@@ -178,6 +178,16 @@ The primary goal of the DELEG records is to provide zone owners a way to signal 
 
 The DELEG record is authoritative in the parent zone and if signed has to be signed with the key of the parent zone. The target of an alias record is an SVCB record that exists and can be signed in the zone it is pointed at, including the child zone.
 
+## Success factors
+
+Objectives of the DELEG design are listed in this section.  The list may change over time as the mission may expand or contract.
+
+Objective 1 : Replace the functionality of the NS and DS resource record sets and enhance by including full transport service address information (e.g., TCP's port number), including glue records, and other information related to consulting a different DNS server.  The purpose of this objective is to support seamless modification of the DNS protocol.
+
+Objective 2 : Expose the role of DNS operations, enabling a zone administrator to make use of multiple DNS providers who may have different operational policies.  This supports having multiple providers for resoliency and stability in steady state and the ability to transition from one provider to another during a transitional state.  The purpose of the objective to identify DNS operators enables the use of security credentials to automatically update delegation information, such as new name servers, new DNSSEC keys, etc.
+
+Objective 3 : Denote when the delegation is an administrative boundary, that is, a delegation to a different zone administration.  The purpose of this objective is to support applications that need to know whether to extend security policies to a subzone, such as web cookies.
+
 # DELEG Record Type
 
 The SVCB record allows for two types of records, the AliasMode and the ServiceMode. The DELEG record takes advantage of both and each will be described below in depth. The wire format of and the registry for the DELEG record is the same as SVCB record defined in  {{?RFC9460}}
