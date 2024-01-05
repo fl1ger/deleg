@@ -289,10 +289,11 @@ TODO: Fill this section out
 
 ## Resolution procedure
 
-There are three ways of having a fallback safe way of resolving a delegating using the new DELEG record. We need to find out which is the most deployable by doing some testing. All of them introduce some new part in the DNS query/response. They are:
-* Use a new EDNS flag in the query to indicate that you want to receive the new DELEG record so that authoritative name servers that support them can include them and others don't. DELEG records would only be sent to resolvers using that EDNS flag putting it in the authority section. The failure case here would be the authoritative failing when getting the new EDNS flag.
-* Keep queries the same, but when answering with a referral put the DELEG record and possible signatures in the authority part of the response with the NS and DS records
-* Keep queries the same, but when answering put the DELEG records  and possible signatures in the additional section of the answer, while population authority only with NS and DS records
+There are several potential ways of having a fallback safe way of resolving a delegating using the new DELEG record. We need to find out which is the most deployable by doing some testing. All of them introduce some new part in the DNS query/response. They are:
+1. Use a new EDNS flag in the query to indicate that you want to receive the new DELEG record so that authoritative name servers that support them can include them and others don't. DELEG records would only be sent to resolvers using that EDNS flag putting it in the authority section. The failure case here would be the authoritative failing when getting the new EDNS flag.
+1. Keep queries the same, but when answering with a referral put the DELEG record and possible signatures in the authority part of the response with the NS and DS records
+1. Keep queries the same, but when answering put the DELEG records  and possible signatures in the additional section of the answer, while population authority only with NS and DS records
+1. Set the QTYPE to DELEG during QNAME minimization, so that the DELEG record is queried and returned explicitly.
 
 Here is an example of DNS interactions simplified for a full resolution after priming for www.example.com query type AAAA with the com and example.com authoritative servers supporting DELEG and the root not. The example is without qname minimization, but there is no difference when one would use that:
 
