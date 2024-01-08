@@ -104,13 +104,13 @@ contributor:
 
 --- abstract
 
-This document extends DELEG record, and SVCB records pointed to by DELEG record, as defined in {{?I-D.draft-dnsop-deleg}}, with ability to specify transport protocols and authentication parameters supported by name servers.
+This document extends DELEG record, and SVCB records pointed to by DELEG record, as defined in `{{?I-D.draft-dnsop-deleg}}`, with ability to specify transport protocols and authentication parameters supported by name servers.
 
 --- middle
 
 # Introduction
 
-The new delegation mechanism based on DELEG record type allows to specify attributes a resolver can use when talking to a delegated authority. This document introduces parameters specific to different transport mechanism than the default udp/53 protocol.
+The new delegation mechanism based on DELEG record type allows to specify attributes a resolver can use when talking to a delegated authority. This document introduces parameters specific to different transport mechanism than the default udp/53 protocol.  Transport selection and configuration follows the SVCB mapping for DNS {{!RFC9461}}, with some modifications described in this document.
 
 Legacy DNS resolvers unaware of DELEG mechanism would continue to use the NS and DS records, while resolvers that understand DELEG and its associated parameters can efficiently switch to new transports.
 
@@ -124,8 +124,8 @@ all capitals, as shown here.
 
 Terminology regarding the Domain Name System comes from {{?BCP219}}, with addition terms defined here:
 
-* [tbd]
-* [tbd]
+* (tbd)
+* (tbd)
 
 ## Introductory Examples
 
@@ -163,17 +163,15 @@ Later sections of this document will go into more detail on the resolution proce
 
 The primary goal of transport specification in DELEG records is to provide zone owners a way to signal to new clients how to connect to servers serving a child domain that can coexist with NS records in the same zone, and do not break software that does not support new transports.
 
-### SvcParams
+# Use of SvcParams
 
-All SvcParamKeys for the "dns" scheme {{?9461}} apply as specified.  These are the "transport parameters", describing how to reach an endpoint.
+All SvcParamKeys for the "dns" scheme {{!RFC9461}} apply as specified.  These are the "transport parameters", describing how to reach an endpoint.
 
 The "alpn" transport parameter is OPTIONAL to include (unlike in SVCB-DNS, where it is generally required).  If the "alpn" SvcParamKey is omitted, the only available transport is presumed to be unencrypted DNS over UDP/TCP port 53.  Endpoints can indicate that insecure transport is not available by specifying "mandatory=alpn".
 
 When TargetName is below the zone cut, DELEG ServiceMode records MUST include "ipv4hint" or "ipv6hint" SvcParamKeys.  These keys provide the address glue, which enables the initial connection to this endpoint.
 
-The following additional DNS SVCB parameters are defined for the DELEG and SVCB ServiceModes.
-
-#### "tlsa"
+## New transport parameter: "tlsa"
 
 The "tlsa" SvcParamKey is a transport parameter representing a TLSA RRset {{?RFC6698}} to be used when connecting to TargetName using a TLS-based transport. If present, this SvcParam SHOULD match the TLSA records whose base domain ({{?RFC6698, Section 3}}) is TargetName. Due to bootstrapping concerns, this SvcParamKey has been added to the DELEG record as the TLSA records might only be resolveable after the initial connection to the delegated nameserver was established. When this field is not present, certificate validation should be performed by either DANE or by traditional TLS certification validation using trusted root certification authorities.
 
@@ -212,11 +210,51 @@ alpn=doq tlsa=disabled mandatory=alpn
 ~~~
 {: title="tlsa SvcParam Examples for DELEG"}
 
-## Deployment Considerations
+# Identifying the Server
+
+In the SVCB mapping for DNS {{!RFC9461}}, the client is presumed to know an "authentication name" that is used to identify and authenticate the server in TLS.  When DANE is in use {{!I-D.ietf-dnsop-svcb-dane}}, the owner of the authentication name can use DNSSEC to authorize a different TLS server identity.  Otherwise, the DNS contents do not affect the authentication process, so the connection is secure even if DNS responses have been modified by an adversary.
+
+In DELEG, the client (a resolver) does not initially know an "authentication name" for any of the desired authoritative servers.  The resolver only knows the apex name of the child zone.  This name is not used as the authentication name.  Instead, the TargetName of each initial DELEG record serves as the initial authentication name for connections relying on that record.  The subsequent connection setup (and SVCB queries, if the DELEG record is in AliasMode) are performed in accordance with {{!RFC9461}} (and {{!I-D.ietf-dnsop-svcb-dane}} if the resolver supports DANE).
+
+If the initial DELEG record is resolved securely, this procedure is secure even if the child zone is not signed.  Otherwise, this procedure provides only opportunistic security, because an attacker could have replaced the DELEG record with one that authorizes the attacker's certificate.
+
+## Examples
+
+~~~Zone
+example.com. DELEG 1 ns2.example.com. (
+                alpn=dot
+                tlsa="3 0 1 ABC..."
+                ipv4hint=192.0.2.54
+                ipv6hint=2001:db8:2423::3 )
+~~~
+{: title="SNI is 'ns2.example.com'"}
+
+~~~Zone
+example.com. DELEG 0 ns-1234.operator.example.
+
+;; The operator.example. zone is presumed to be signed.
+ns-1234.operator.example.          SVCB 1 x1234.opshost.example. alpn=dot
+
+;; The opshost.example. zone is also presuemd to be signed.
+_853._tcp.x1234.opshost.example. TLSA 2 0 1 ABC...
+~~~
+{: title="SNI is 'x1234.opshost.example' if the resolver supports DANE, otherwise 'ns-1234.operator.example'"}
+
+~~~Zone
+example.com. DELEG 1 ns-v4.example.com. (
+                alpn=dot
+                ipv4hint=192.0.2.54 )
+example.com. DELEG 1 ns-v6.example.com. (
+                alpn=dot
+                ipv6hint=2001:db8:2423::3 )
+~~~
+{: title="SNI is 'ns-v4.example.com' for IPv4, and 'ns-v6.example.com' for IPv6"}
+
+# Deployment Considerations
 
 The DELEG and SVCB records intends to replace the NS record while also adding additional functionality in order to support additional transports for the DNS. Below are discussions of considerations for deployment.
 
-### Availability
+## Availability
 
 If a zone operator removes all NS records before DELEG and SVCB records are implemented by all clients, the availability of their zones will be impacted for the clients that are using non-supporting resolvers. In some cases, this may be a desired quality, but should be noted by zone owners and operators.
 
