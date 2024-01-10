@@ -108,24 +108,24 @@ contributor:
     email: chantr4@gmail.com
 
 --- abstract
+A delegation in the Domain Name System (DNS) is a mechanism that enables efficient and distributed management of the DNS namespace. It involves delegating authority over subdomains to specific DNS servers via NS records, allowing for a hierarchical structure and distributing the responsibility for maintaining DNS records.
 
-Authoritative control of parts of the Domain Name System namespace are indicated with a special record type that can only indicate the name of the server which a client resolver should contact for more information. Any other features of that server must then be discovered through other mechanisms.  This draft proposes a new extensible DNS record type, DELEG, which allows additional information about authoritative nameservers to be conveyed in the delegation.
-
+An NS record contains the hostname of the nameserver for the delegated namespace. Any facilities of that nameserver must be discovered through other mechanisms. This draft proposes a new extensible DNS record type, DELEG, which contains additional information about the delegated namespace and the capabilities of authoritative nameservers for the delegated namespace.
 --- middle
 
 # Introduction
 
-In the Domain Name System {{!STD13}}, subtrees within the domain name hierarchy are indicated by delegations to servers which are authoritative for their portion of the namespace.  The DNS records that do this, called NS records, can only represent the name of a nameserver.  Clients can expect nothing out of this delegated server other than that it will answer DNS requests on UDP port 53.
+In the Domain Name System {{!STD13}}, subdomains within the domain name hierarchy are indicated by delegations to servers which are authoritative for their portion of the namespace.  The DNS records that do this, called NS records, can only represent the name of a nameserver.  Clients can expect nothing out of this delegated server other than that it will answer DNS requests on UDP port 53.
 
 As the DNS has evolved over the past four decades, this has proven to be a barrier for the efficient introduction of new DNS technology.  Many features that have been conceived come with additional overhead as they are constrained by the least common denominator of nameserver functionality.
 
-The proposed DELEG record type remedies this problem by providing extensible parameters to describe what attributes a resolver would like to know about the the delegated authority, for example that it should be contacted using a different transport mechanism than the default udp/53.
+The proposed DELEG record type remedies this problem by providing extensible parameters to indicate capabilities that a resolver may use for the delegated authority, for example that it should be contacted using a different transport mechanism than the default udp/53.
 
-The record lives in harmony with the existing NS records and any DS records used to secure the delegation with DNSSEC, with all three types provided in the Authority section of DNS responses.  Legacy DNS resolvers will ignore the unknown DELEG type and continue to use the NS and DS records, per the testing described in Appendix A.  Resolvers that understand DELEG and its associated parameters can efficiently switch to the new mechanism.
+The DELEG record is served with the existing NS records and any DS records used to secure the delegation with DNSSEC, with all three types provided in the Authority section of DNS responses.  Legacy DNS resolvers will ignore the unknown DELEG type and continue to use the NS and DS records, per the testing described in Appendix A.  Resolvers that understand DELEG and its associated parameters can efficiently switch to the new mechanism.
 
 The DELEG record leverages the Service Binding (SVCB) record format defined in {{?RFC9460}}, using a subset of the already defined service parameters.
 
-By using an AliasMode inherited from SVCB, DELEG also allows a level of indirection to ease the operational maintenance of multiple zones by the same servers.  For example, an operator can have numerous customer domains all aliased to nameserver sets whose operational characteristics can be easily updated without intervention from the customers.  Most notably, we expect that this provides a method for addressing the long-standing problem operators have with maintaining DS records on behalf of their customers, though the solution for that use case will be handled in a separate draft.
+DELEG can use AliasMode, inherited from SVCB, to insert a level of indirection to ease the operational maintenance of multiple zones by the same servers.  For example, an operator can have numerous customer domains all aliased to nameserver sets whose operational characteristics can be easily updated without intervention from the customers.  Most notably, this provides a method for addressing the long-standing problem operators have with maintaining DS records on behalf of their customers. This facility will be handled in a separate draft.
 
 ## Terminology
 
@@ -142,15 +142,14 @@ Terminology regarding the Domain Name System comes from {{?BCP219}}, with additi
 
 ## Reasoning for changing delegation
 
-* The current DNS protocol does not allow secure upgrade to new transport mechanisms between auth and resolver - e.g. authenticated DNS-over-TLS from resolver to auth.
-* The current delegation with NS and glue records requires a leap of faith because these records are not signed. Spoofed delegation can be detected eventually if the domain is signed, but only after traffic is (potentially) sent to the attacker’s endpoint.
-* There	is no secure way to signal in delegation what capabilities authoritative servers support. The client cannot rely on any new behavior and currently must resort to trial-and-error with EDNS which is unsigned.
-* DNS operators don’t have a formal role in the current system. Consequently, registries/registrars generally don’t talk to operators and users must act as go-between and make technical changes they don’t understand.
-    * Asking domain owners to add new NS records, modify DS records when rolling keys etc. This is very inflexible when an operator needs to make technical changes.
+* The DNS protocol has no method to indicate methods of secure transport between auth and resolver - e.g. authenticated DNS-over-TLS from resolver to auth.
+* Delegation point NS records and glue address records are not DNSSEC signed. This presents a leap of faith. Spoofed delegation point NS records can be detected eventually if the domain is signed, but only after traffic is (potentially) sent to the spoofed endpoint.
+* There	is no secure way to signal what capabilities authoritative servers support. The client cannot rely on any new behavior and must resort to trial-and-error with EDNS, which can not be secured.
+* The Registry, Registrar, Registrant (RRR) model has no formally defined role for  DNS operators. Consequently, registrants are the channel between DNS operators and registriesi/registrars on purely operational elements, such as adding NS records, modify DS records when rolling keys, etc. Deleg's AliasMode allows the registrants to delegate these facilities to a DNS Operator.
 
 ## Introductory Examples
 
-To introduce DELEG record, this example shows a possible response from an authoritative in the authority section of the DNS response when delegating to another nameserver.
+To introduce DELEG record, this example shows the authority section of a DNS response that delegates a subdomain to another nameserver.
 
 
     example.com.  86400  IN DELEG  1 ns1.example.com. (
@@ -178,9 +177,13 @@ Later sections of this document will go into more detail on the resolution proce
 
 ## Goal of the DELEG record
 
-The primary goal of the DELEG records is to provide zone owners a way to signal to clients how to connect and validate a child domain that can coexist with NS records in the same zone, and do not break software that does not support them.
+The primary goal of the DELEG records is to provide zone owners a method to signal capabilities to clients how to connect and validate a subdomain. This method coexists with NS records in the same zone. 
 
 The DELEG record is authoritative in the parent zone and if signed has to be signed with the key of the parent zone. The target of an alias record is an SVCB record that exists and can be signed in the zone it is pointed at, including the child zone.
+
+## Facilities 
+
+The DELEG record is extensible in such a way that future innovations in the domain name system, such as new methods of secure transport, message encoding, error reporting, etc, does not depend on a re-design of the DNS. 
 
 # DELEG Record Type
 
@@ -273,6 +276,28 @@ If a zone operator removes all NS records before DELEG and SVCB records are impl
 
 For latency-conscious zones, the overall packet size of the delegation records from a parent zone to child zone should be taken into account when configuring the NS, DELEG and SVCB records. Resolvers that wish to receive DELEG and SVCB records in response SHOULD advertise and support a buffer size that is as large as possible, to allow the authoritative server to respond without truncating whenever possible.
 
+# Implementation
+## Including DELEG RRs in a Zone
+### Signing DELEG RRs
+#### The DELEG DNSKEY Flag
+
+## Authoritative Name Servers
+### Including DELEG RRs in a Response
+### Responding to Queries for Type DELEG
+### Authenticated Denial of DELEG 
+## Example DNSSEC responses
+
+## Resolving with DELEG
+### extending the resolving algorithm
+
+See RFC1034, section 5.3.3 step 4b.
+
+### Priority of DELEG over NS and Glue Address records
+
+## Authenticating DELEG Responses  
+### Status of the DELEG DNSKEY flag
+### Verifying Authenticated Denial of DELEG
+### Stub Resolver Support
 
 # DNSSEC and DELEG
 
@@ -340,7 +365,7 @@ In December 2023, Roy Arends and Shumon Huque tested the core idea that enables 
 The tested legacy resolver installations included BIND, Unbound,
 PowerDNS, and Knot.  In addition, the public resolver services run by Cloudflare (1.1.1.1), Google (8.8.8.8), and Packet Clearing House (9.9.9.9) were examined and provided similar results.
 
-For more details about the specific testing methodology, please see {{?test-plan}}.
+For more details about the specific testing methodology, please see test-plan.
 
 # Acknowledgments {:unnumbered}
 
