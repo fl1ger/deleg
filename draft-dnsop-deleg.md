@@ -7,6 +7,7 @@ category: std
 updates: 1035
 
 ipr: trust200902
+submissiontype: IETF
 workgroup: dnsop
 area: Internet
 category: info
@@ -137,14 +138,14 @@ all capitals, as shown here.
 
 Terminology regarding the Domain Name System comes from {{?BCP219}}, with addition terms defined here:
 
-* [tbd]
-* [tbd]
+* \[tbd\]
+* \[tbd\]
 
 ## Reasoning for changing delegation
 
 * The DNS protocol has no method to indicate methods of secure transport between auth and resolver - e.g. authenticated DNS-over-TLS from resolver to auth.
 * Delegation point NS records and glue address records are not DNSSEC signed. This presents a leap of faith. Spoofed delegation point NS records can be detected eventually if the domain is signed, but only after traffic is (potentially) sent to the spoofed endpoint.
-* There	is no secure way to signal what capabilities authoritative servers support. The client cannot rely on any new behavior and must resort to trial-and-error with EDNS, which can not be secured.
+* There is no secure way to signal what capabilities authoritative servers support. The client cannot rely on any new behavior and must resort to trial-and-error with EDNS, which can not be secured.
 * The Registry, Registrar, Registrant (RRR) model has no formally defined role for  DNS operators. Consequently, registrants are the channel between DNS operators and registriesi/registrars on purely operational elements, such as adding NS records, modify DS records when rolling keys, etc. Deleg's AliasMode allows the registrants to delegate these facilities to a DNS Operator.
 
 ## Introductory Examples
@@ -277,26 +278,41 @@ If a zone operator removes all NS records before DELEG and SVCB records are impl
 For latency-conscious zones, the overall packet size of the delegation records from a parent zone to child zone should be taken into account when configuring the NS, DELEG and SVCB records. Resolvers that wish to receive DELEG and SVCB records in response SHOULD advertise and support a buffer size that is as large as possible, to allow the authoritative server to respond without truncating whenever possible.
 
 # Implementation
+
 ## Including DELEG RRs in a Zone
+
 ### Signing DELEG RRs
+
 #### The DELEG DNSKEY Flag
 
+
 ## Authoritative Name Servers
+
 ### Including DELEG RRs in a Response
+
 ### Responding to Queries for Type DELEG
+
 ### Authenticated Denial of DELEG 
+
+
 ## Example DNSSEC responses
 
+
 ## Resolving with DELEG
+
 ### extending the resolving algorithm
 
 See RFC1034, section 5.3.3 step 4b.
 
 ### Priority of DELEG over NS and Glue Address records
 
+
 ## Authenticating DELEG Responses  
+
 ### Status of the DELEG DNSKEY flag
+
 ### Verifying Authenticated Denial of DELEG
+
 ### Stub Resolver Support
 
 # DNSSEC and DELEG
@@ -328,23 +344,22 @@ Here is an example of DNS interactions simplified for a full resolution after pr
 * Ask www.example.com qtype AAAA to a.root-servers.net the answer is:
     Answer section: (empty)
     Authority section:
-        com.			172800	IN	NS	a.gtld-servers.net.
+        com.   172800 IN NS a.gtld-servers.net.
     Additional section:
-        a.gtld-servers.net.	172800	IN	AAAA	2001:db8:a83e::2:30
+        a.gtld-servers.net. 172800 IN AAAA 2001:db8:a83e::2:30
 * Ask www.example.com qtype AAAA to a.gtld-servers.net the answer is:
         Answer section: (empty)
         Authority section:
-            example.com.			172800	IN	NS	ns1.example.com.
-            example.com.			172800	IN	DELEG   1 config1.example.com.
+            example.com.   172800 IN NS ns1.example.com.
+            example.com.   172800 IN DELEG   1 config1.example.com.
                                         ( ipv6hint=2001:db8:440:1:1f::24 )
         Additional section:
-            ns1.example.com.	172800	IN	AAAA	2001:db8:322c::35:42
+            ns1.example.com. 172800 IN AAAA 2001:db8:322c::35:42
 * Ask www.example.com qtype AAAA to config1.example.com (2001:db8:1:1f::24) the answer is:
             Answer section:
-                www.example.com.		3600	IN	AAAA	2001:db8:a0:322c::2
+                www.example.com.  3600 IN AAAA 2001:db8:a0:322c::2
             Authority section: (empty)
             Additional section: (empty)
-
 
 TODO: more resolution examples (e.g out of bailiwick)
 
