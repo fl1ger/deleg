@@ -116,13 +116,13 @@ An NS record contains the hostname of the nameserver for the delegated namespace
 
 # Introduction
 
-In the Domain Name System {{!STD13}}, subdomains within the domain name hierarchy are indicated by delegations to servers which are authoritative for their portion of the namespace.  The DNS records that do this, called NS records, can only represent the name of a nameserver.  Clients can expect nothing out of this delegated server other than that it will answer DNS requests on UDP port 53.
+In the Domain Name System {{!STD13}}, subdomains within the domain name hierarchy are indicated by delegations to servers which are authoritative for their portion of the namespace.  The DNS records that do this, called NS records, contain hostnames of nameservers, which resolve to addresses.  No other information is available to the resolver. It is limited to connect to the authoritative servers over UDP and TCP port 53.
 
-As the DNS has evolved over the past four decades, this has proven to be a barrier for the efficient introduction of new DNS technology.  Many features that have been conceived come with additional overhead as they are constrained by the least common denominator of nameserver functionality.
+This limitation is a barrier for efficient introduction of new DNS technology. New features come with additional overhead as they are constrained by the least common denominator of resolver and nameserver functionality. New functionality could be discovered insecurely by trial and error, or negotiated after first connection, which is suboptimal.
 
-The proposed DELEG record type remedies this problem by providing extensible parameters to indicate capabilities that a resolver may use for the delegated authority, for example that it should be contacted using a different transport mechanism than the default udp/53.
+The proposed DELEG record type remedies this problem by providing extensible parameters to indicate capabilities that a resolver may use for the delegated authority, for example that it should be contacted using a transport mechanism other than DNS over UDP or TCP on port 53.
 
-The DELEG record is served along with the existing NS records and any DS records used to secure the delegation with DNSSEC, with all three types provided in the Authority section of DNS responses.  Legacy DNS resolvers will ignore the unknown DELEG type and continue to use the NS and DS records, per the testing described in Appendix A.  Resolvers that understand DELEG and its associated parameters can efficiently switch to the DELEG mechanism.
+DELEG records are served with NS and DS records in the Authority section of DNS delegation type responses.  Standard behavior of legacy DNS resolvers is to ignore the DELEG type and continue to rely on NS and DS records (see compliance testing described in Appendix A).  Resolvers that do understand DELEG and its associated parameters can efficiently switch to the new mechanism.
 
 The DELEG record leverages the Service Binding (SVCB) record format defined in {{?RFC9460}}, using a subset of the already defined service parameters.
 
@@ -138,14 +138,13 @@ all capitals, as shown here.
 
 Terminology regarding the Domain Name System comes from {{?BCP219}}, with addition terms defined here:
 
-* \[tbd\]
-* \[tbd\]
+* legacy name servers: An authoritative server that does not support the DELEG record.
+* legacy resolvers: A resolver that does not support the DELEG record.
 
-## Reasoning for Changing Delegation Information
+## Motivation for DELEG
 
-* The DNS protocol has no method to indicate methods of secure transport between auth and resolver - e.g. authenticated DNS-over-TLS from resolver to auth.
-* Delegation point NS records and glue address records are not DNSSEC signed. This presents a leap of faith. Spoofed delegation point NS records can be detected eventually if the domain is signed, but only after traffic is (potentially) sent to the spoofed endpoint.
-* There is no secure way to signal what capabilities authoritative servers support. The client cannot rely on any new behavior and must resort to trial-and-error with EDNS, which can not be secured with DNSSEC.
+* There is no secure way to signal capabilities or new features of an authoritative server, such as authenticated DNS-over-TLS. A resolver must resort to trial-and-error methods that can potentially fall victim to downgrade attacks.
+* Delegation point NS records and glue address records are, by design, not DNSSEC signed. This presents a leap of faith. Spoofed delegation point NS records can be detected eventually if the delegated domain was signed, but only after traffic was sent to the (potentially) spoofed endpoint.
 * The Registry, Registrar, Registrant (RRR) model has no formally defined role for  DNS operators. Consequently, registrants are the channel between DNS operators and registries/registrars on purely operational elements, such as adding NS records, modify DS records when rolling keys, etc. Deleg's AliasMode allows the registrants to delegate these facilities to a DNS Operator.
 
 ## Introductory Examples
