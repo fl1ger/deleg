@@ -116,13 +116,13 @@ An NS record contains the hostname of the nameserver for the delegated namespace
 
 # Introduction
 
-In the Domain Name System {{!STD13}}, subdomains within the domain name hierarchy are indicated by delegations to servers which are authoritative for their portion of the namespace.  The DNS records that do this, called NS records, can only represent the name of a nameserver.  Clients can expect nothing out of this delegated server other than that it will answer DNS requests on UDP port 53.
+In the Domain Name System {{!STD13}}, subdomains within the domain name hierarchy are indicated by delegations to servers which are authoritative for their portion of the namespace.  The DNS records that do this, called NS records, contain hostnames of nameservers, which resolve to addresses.  No other information is available to the resolver. It is limited to connect to the authoritative servers over UDP and TCP port 53.
 
-As the DNS has evolved over the past four decades, this has proven to be a barrier for the efficient introduction of new DNS technology.  Many features that have been conceived come with additional overhead as they are constrained by the least common denominator of nameserver functionality.
+This limitation is a barrier for efficient introduction of new DNS technology. New features come with additional overhead as they are constrained by the intersection of resolver and nameserver functionality. New functionality could be discovered insecurely by trial and error, or negotiated after first connection, which is costly and unsafe.
 
-The proposed DELEG record type remedies this problem by providing extensible parameters to indicate capabilities that a resolver may use for the delegated authority, for example that it should be contacted using a different transport mechanism than the default udp/53.
+The proposed DELEG record type remedies this problem by providing extensible parameters to indicate capabilities that a resolver may use for the delegated authority, for example that it should be contacted using a transport mechanism other than DNS over UDP or TCP on port 53.
 
-The DELEG record is served along with the existing NS records and any DS records used to secure the delegation with DNSSEC, with all three types provided in the Authority section of DNS responses.  Legacy DNS resolvers will ignore the unknown DELEG type and continue to use the NS and DS records, per the testing described in Appendix A.  Resolvers that understand DELEG and its associated parameters can efficiently switch to the DELEG mechanism.
+DELEG records are served with NS and DS records in the Authority section of DNS delegation type responses.  Standard behavior of legacy DNS resolvers is to ignore the DELEG type and continue to rely on NS and DS records (see compliance testing described in Appendix A).  Resolvers that do understand DELEG and its associated parameters can efficiently switch to the new mechanism.
 
 The DELEG record leverages the Service Binding (SVCB) record format defined in {{?RFC9460}}, using a subset of the already defined service parameters.
 
@@ -138,14 +138,13 @@ all capitals, as shown here.
 
 Terminology regarding the Domain Name System comes from {{?BCP219}}, with addition terms defined here:
 
-* \[tbd\]
-* \[tbd\]
+* legacy name servers: An authoritative server that does not support the DELEG record.
+* legacy resolvers: A resolver that does not support the DELEG record.
 
-## Reasoning for Changing Delegation Information
+## Motivation for DELEG
 
-* The DNS protocol has no method to indicate methods of secure transport between auth and resolver - e.g. authenticated DNS-over-TLS from resolver to auth.
-* Delegation point NS records and glue address records are not DNSSEC signed. This presents a leap of faith. Spoofed delegation point NS records can be detected eventually if the domain is signed, but only after traffic is (potentially) sent to the spoofed endpoint.
-* There is no secure way to signal what capabilities authoritative servers support. The client cannot rely on any new behavior and must resort to trial-and-error with EDNS, which can not be secured with DNSSEC.
+* There is no secure way to signal capabilities or new features of an authoritative server, such as authenticated DNS-over-TLS. A resolver must resort to trial-and-error methods that can potentially fall victim to downgrade attacks.
+* Delegation point NS records and glue address records are, by design, not DNSSEC signed. This presents a leap of faith. Spoofed delegation point NS records can be detected eventually if the delegated domain was signed, but only after traffic was sent to the (potentially) spoofed endpoint.
 * The Registry, Registrar, Registrant (RRR) model has no formally defined role for  DNS operators. Consequently, registrants are the channel between DNS operators and registries/registrars on purely operational elements, such as adding NS records, modify DS records when rolling keys, etc. Deleg's AliasMode allows the registrants to delegate these facilities to a DNS Operator.
 
 ## Introductory Examples
@@ -181,6 +180,16 @@ Later sections of this document will go into more detail on the resolution proce
 The primary goal of the DELEG records is to provide zone owners a method to signal capabilities to clients how to connect and validate a subdomain. This method coexists with NS records in the same zone. 
 
 The DELEG record is authoritative in the parent zone and, if signed, has to be signed with the key of the parent zone. The target of an alias record is an SVCB record that exists and can be signed in the zone it is pointed at, including the child zone.
+
+## DNSSEC is RECOMMENDED
+
+While DNSSEC is RECOMMENDED, unsigned DELEG records may be retrieved in a secure way from trusted, Privacy-enabling DNS servers using encrypted transports.
+
+### Preventing downgrade attacks
+
+A flag in the DNSKEY record is used as a backwards compatible, secure signal to indicate to a resolver that DELEG records are present or that there is an authenticated denial of a DELEG record. Legacy resolvers will ignore this flag and use the DNSKEY as is.
+
+Without this secure signal an on-path adversary can remove DELEG records and its RRsig from a response and effectively downgrade this to a legacy DNSSEC signed response.
 
 ## Facilities 
 
@@ -372,16 +381,18 @@ When a delegation using DELEG to a child is present, the resolver MUST use it an
 
 DELEG will use the SVCB IANA registry definitions in section 14.3 of {{!RFC9460}}.
 
+The IANA has assigned a bit in the DNSKEY flags field (see Section 7 of {{!RFC4034}} for the DELEG bit (N).
 --- back
 
-# Appendix A Legacy Test Results {#Testing}
+# Legacy Test Results {#Testing}
 
-In December 2023, Roy Arends and Shumon Huque tested the core idea that enables this approach, that legacy resolvers would simply ignore the unknown DELEG record type from authoritative servers.  Tested both with DNSSEC and without against the most widely used DNS resolver implementations, the tests clearly supported the soundness of this method.  The tested legacy resolvers were all able to continue to successfully resolve the test domains via traditional DNS over port 53 even in the presence of DELEG records.
+In December 2023, Roy Arends and Shumon Huque tested two distinct sets of requirements that would enable the approach taken in this document.
 
-The tested legacy resolver installations included BIND, Unbound,
-PowerDNS, and Knot.  In addition, the public resolver services run by Cloudflare (1.1.1.1), Google (8.8.8.8), and Packet Clearing House (9.9.9.9) were examined and provided similar results.
+* legacy resolvers ignore unknown record types in the authority section of referrals.
+* legacy resolvers ignore an unknown key flag in a DNSKEY.
 
-For more details about the specific testing methodology, please see test-plan.
+Various recent implmentations were tested (BIND, Unbound, PowerDNS Recursor and Knot) in addition to various public resolver services (Cloudflare, Google, Packet Clearing House). All possible variations of delegations were tested, and there were no issues.
+Further details about the specific testing methodology, please see test-plan.
 
 # Acknowledgments {:unnumbered}
 
