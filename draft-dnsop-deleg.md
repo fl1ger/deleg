@@ -118,7 +118,7 @@ An NS record contains the hostname of the nameserver for the delegated namespace
 
 In the Domain Name System {{!STD13}}, subdomains within the domain name hierarchy are indicated by delegations to servers which are authoritative for their portion of the namespace.  The DNS records that do this, called NS records, contain hostnames of nameservers, which resolve to addresses.  No other information is available to the resolver. It is limited to connect to the authoritative servers over UDP and TCP port 53.
 
-This limitation is a barrier for efficient introduction of new DNS technology. New features come with additional overhead as they are constrained by the least common denominator of resolver and nameserver functionality. New functionality could be discovered insecurely by trial and error, or negotiated after first connection, which is suboptimal.
+This limitation is a barrier for efficient introduction of new DNS technology. New features come with additional overhead as they are constrained by the intersection of resolver and nameserver functionality. New functionality could be discovered insecurely by trial and error, or negotiated after first connection, which is costly and unsafe.
 
 The proposed DELEG record type remedies this problem by providing extensible parameters to indicate capabilities that a resolver may use for the delegated authority, for example that it should be contacted using a transport mechanism other than DNS over UDP or TCP on port 53.
 
@@ -180,6 +180,16 @@ Later sections of this document will go into more detail on the resolution proce
 The primary goal of the DELEG records is to provide zone owners a method to signal capabilities to clients how to connect and validate a subdomain. This method coexists with NS records in the same zone. 
 
 The DELEG record is authoritative in the parent zone and, if signed, has to be signed with the key of the parent zone. The target of an alias record is an SVCB record that exists and can be signed in the zone it is pointed at, including the child zone.
+
+## DNSSEC is RECOMMENDED
+
+While DNSSEC is RECOMMENDED, unsigned DELEG records may be retrieved in a secure way from trusted, Privacy-enabling DNS servers using encrypted transports.
+
+### Preventing downgrade attacks
+
+A flag in the DNSKEY record is used as a backwards compatible, secure signal to indicate to a resolver that DELEG records are present or that there is an authenticated denial of a DELEG record. Legacy resolvers will ignore this flag and use the DNSKEY as is.
+
+Without this secure signal an on-path adversary can remove DELEG records and its RRsig from a response and effectively downgrade this to a legacy DNSSEC signed response.
 
 ## Facilities 
 
@@ -371,16 +381,18 @@ When a delegation using DELEG to a child is present, the resolver MUST use it an
 
 DELEG will use the SVCB IANA registry definitions in section 14.3 of {{!RFC9460}}.
 
+The IANA has assigned a bit in the DNSKEY flags field (see Section 7 of {{!RFC4034}} for the DELEG bit (N).
 --- back
 
-# Appendix A Legacy Test Results {#Testing}
+# Legacy Test Results {#Testing}
 
-In December 2023, Roy Arends and Shumon Huque tested the core idea that enables this approach, that legacy resolvers would simply ignore the unknown DELEG record type from authoritative servers.  Tested both with DNSSEC and without against the most widely used DNS resolver implementations, the tests clearly supported the soundness of this method.  The tested legacy resolvers were all able to continue to successfully resolve the test domains via traditional DNS over port 53 even in the presence of DELEG records.
+In December 2023, Roy Arends and Shumon Huque tested two distinct sets of requirements that would enable the approach taken in this document.
 
-The tested legacy resolver installations included BIND, Unbound,
-PowerDNS, and Knot.  In addition, the public resolver services run by Cloudflare (1.1.1.1), Google (8.8.8.8), and Packet Clearing House (9.9.9.9) were examined and provided similar results.
+* legacy resolvers ignore unknown record types in the authority section of referrals.
+* legacy resolvers ignore an unknown key flag in a DNSKEY.
 
-For more details about the specific testing methodology, please see test-plan.
+Various recent implmentations were tested (BIND, Unbound, PowerDNS Recursor and Knot) in addition to various public resolver services (Cloudflare, Google, Packet Clearing House). All possible variations of delegations were tested, and there were no issues.
+Further details about the specific testing methodology, please see test-plan.
 
 # Acknowledgments {:unnumbered}
 
