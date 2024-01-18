@@ -6,11 +6,11 @@ dnsop                                                           T. April
 Internet-Draft                                                          
 Updates: 1035 (if approved)                                    P. Špaček
 Intended status: Informational                                       ISC
-Expires: 20 July 2024                                           R. Weber
+Expires: 21 July 2024                                           R. Weber
                                                      Akamai Technologies
                                                              D. Lawrence
                                                               Salesforce
-                                                         17 January 2024
+                                                         18 January 2024
 
 
                      Extensible Delegation for DNS
@@ -46,7 +46,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 20 July 2024.
+   This Internet-Draft will expire on 21 July 2024.
 
 Copyright Notice
 
@@ -477,6 +477,12 @@ config3.example.org.  86400  IN SVCB 1 . ( ipv4hint=192.0.2.54,192.0.2.56
    set the TC bit.
 
 3.2.2.  Responding to Queries for Type DELEG
+
+   DELEG records, when present, are included in referrals.  When a
+   parent and child are served from the same authoritative server, this
+   referral will not be send since the authoritative server will respond
+   with information from the child zone.  In that case the resolver may
+   query for type DELEG.
 
    The DELEG resource record type is unusual in that it appears only on
    the parent zone's side of a zone cut.  For example, the DELEG RRset
