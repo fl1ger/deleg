@@ -1,6 +1,6 @@
 ---
-title: Extensible Delegation for DNS
-abbrev: DELEG
+title: Extensible Delegation for DNS -- Transport
+abbrev: DELEG Transport
 docname: draft-dnsop-deleg-transport-latest
 date: {DATE}
 category: std
@@ -11,7 +11,7 @@ area: Internet
 category: info
 keyword: Internet-Draft
 
-stand_alone: no
+stand_alone: yes
 pi: [toc, sortrefs, symrefs]
 
 author:
@@ -165,7 +165,7 @@ The primary goal of transport specification in DELEG records is to provide zone 
 
 ### SvcParams
 
-All SvcParamKeys for the "dns" scheme {{?9461}} apply as specified.  These are the "transport parameters", describing how to reach an endpoint.
+All SvcParamKeys for the "dns" scheme {{?RFC9461}} apply as specified.  These are the "transport parameters", describing how to reach an endpoint.
 
 The "alpn" transport parameter is OPTIONAL to include (unlike in SVCB-DNS, where it is generally required).  If the "alpn" SvcParamKey is omitted, the only available transport is presumed to be unencrypted DNS over UDP/TCP port 53.  Endpoints can indicate that insecure transport is not available by specifying "mandatory=alpn".
 
