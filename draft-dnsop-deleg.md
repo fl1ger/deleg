@@ -185,6 +185,8 @@ The DELEG record is authoritative in the parent zone and, if signed, has to be s
 
 While DNSSEC is RECOMMENDED, unsigned DELEG records may be retrieved in a secure way from trusted, Privacy-enabling DNS servers using encrypted transports.
 
+DISCUSS Note: This will lead to cyclical dependencies. A DELEG record can introduce a secure way to communicate with trusted, Privacy-enabling DNS servers. For that, it needs to be DNSSEC signed. 
+
 ### Preventing downgrade attacks
 
 A flag in the DNSKEY record is used as a backwards compatible, secure signal to indicate to a resolver that DELEG records are present or that there is an authenticated denial of a DELEG record. Legacy resolvers will ignore this flag and use the DNSKEY as is.
@@ -288,48 +290,57 @@ For latency-conscious zones, the overall packet size of the delegation records f
 
 # Implementation
 
+DELEG introduces the concept of signaling capabilities to clients on how to connect and validate a subdomain. This section details the implementation specifics of DELEG for various DNS components.
+
 ## Including DELEG RRs in a Zone
+
+A DELEG RRset MAY be present at a delegation point.  The DELEG RRset MAY contain multiple records. DELEG RRsets MUST NOT appear at a zone's apex.
+
+A DELEG RRset MAY be present with or without NS or DS RRsets at the delegation point. 
+
+Construction of a DELEG RR requires knowledge which implies communication between the
+operators of the child and parent zones. This communication is an operational matter not covered by this document.
 
 ### Signing DELEG RRs
 
-#### The DELEG DNSKEY Flag
+A DELEG RRset MUST be DNSSEC signed if the zone is signed.
 
+If a signed zone contains DELEG records, the zone MUST be signed with a DNSKEY that has the DELEG flag set.
 
 ## Authoritative Name Servers
 
 ### Including DELEG RRs in a Response
 
+If a DELEG RRset is present at the delegation point, the name server MUST return both the DELEG RRset and its associated RRSIG RR in the Authority section along with the DS RRset and its associated RRSIG RR and the NS RRset.
+
+If no DELEG RRset is present at the delegation point, and the zone was signed with a DNSKEY that has the DELEG flag set, the name server MUST return the NSEC or NSEC3 RR that proves that the DELEG RRset is not present including its associated RRSIG RR along with the DS RRset and its associated RRSIG RR if present and the NS RRset, if present. 
+
+Including these DELEG, DS, NSEC or NSEC3, and RRSIG RRs increases the size of referral messages. If space does not permit inclusion of these records, including glue address records, the name server MUST set the TC bit.
+
 ### Responding to Queries for Type DELEG
+DELEG records, when present, are included in referrals. When a parent and child are served from the same authoritative server, this referral will not be send since the authoritative server will respond with information from the child zone. In that case the resolver may query for type DELEG.
 
-### Authenticated Denial of DELEG 
+The DELEG resource record type is unusual in that it appears only on the parent zone's side of a zone cut.  For example, the DELEG RRset for the delegation of "foo.example" is stored in the "example" zone rather than in the "foo.example" zone.  This requires special processing rules for both name servers and resolvers, as the name server for the child zone is authoritative for the name at the zone cut by the normal DNS rules but the child zone does not contain the DELEG RRset.
 
+A DELEG-aware resolver sends queries to the parent zone when looking for a needed DELEG RR at a delegation point. However, special rules are necessary to avoid confusing legacy resolvers which might become involved in processing such a query (for example, in a network configuration that forces a DELEG-aware resolver to channel its queries through a legacy recursive name server).  The rest of this section describes how a DELEG-aware name server processes DELEG queries in order to avoid this problem.
 
-## Example DNSSEC responses
+The need for special processing by a DELEG-aware name server only arises when all the following conditions are met:
 
+* The name server has received a query for the DELEG RRset at a zone cut.
 
-## Resolving with DELEG
+* The name server is authoritative for the child zone.
 
-### extending the resolving algorithm
+* The name server is not authoritative for the parent zone.
 
-See RFC1034, section 5.3.3 step 4b.
+* The name server does not offer recursion.
+
+In all other cases, the name server either has some way of obtaining the DELEG RRset or could not have been expected to have the DELEG RRset, so the name server can return either the DELEG RRset or an error response according to the normal processing rules.
+
+If all the above conditions are met, however, the name server is authoritative for SNAME but cannot supply the requested RRset. In this case, the name server MUST return an authoritative "no data" response showing that the DELEG RRset does not exist in the child zone's apex.
 
 ### Priority of DELEG over NS and Glue Address records
 
-
-## Authenticating DELEG Responses  
-
-### Status of the DELEG DNSKEY flag
-
-### Verifying Authenticated Denial of DELEG
-
-### Stub Resolver Support
-
-# DNSSEC and DELEG
-
-Unlike NS records, DELEG records are always signed by the parent, similar to DS records.
-The SVCB records the DELEG record point to, are signed as normal record types in a signed child/leaf zone.
-
-TODO: As we already discovered a potential downgrade attack by just removing the DELEG refrerral we have to think about and come up with a way how to signal that the parent zone has DELEG.
+DELEG-aware resolvers SHOULD prioritize DELEG records over NS and Glue Address records.
 
 # Privacy Considerations
 
@@ -343,13 +354,7 @@ TODO: Fill this section out
 
 ## Resolution Procedure
 
-There are three ways of having a fallback safe way of resolving a delegating using the new DELEG record. We need to find out which is the most deployable by doing some testing. All of them introduce some new part in the DNS query/response. They are:
-
-* Use a new EDNS flag in the query to indicate that you want to receive the new DELEG record so that authoritative name servers that support them can include them and others don't. DELEG records would only be sent to resolvers using that EDNS flag putting it in the authority section. The failure case here would be the authoritative failing when getting the new EDNS flag.
-* Keep queries the same, but when answering with a referral put the DELEG record and possible signatures in the authority part of the response with the NS and DS records
-* Keep queries the same, but when answering put the DELEG records  and possible signatures in the additional section of the answer, while population authority only with NS and DS records
-
-Here is an example of DNS interactions simplified for a full resolution after priming for www.example.com query type AAAA with the com and example.com authoritative servers supporting DELEG and the root not. The example is without qname minimization, but there is no difference when one would use that:
+An example of a simplified DNS interaction after priming. This is a query for www.example.com type AAAA with DELEG-aware com and example.com authoritative servers. 
 
 * Ask www.example.com qtype AAAA to a.root-servers.net the answer is:
     Answer section: (empty)
