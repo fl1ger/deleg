@@ -5,7 +5,7 @@
 dnsop                                                           T. April
 Internet-Draft                                                          
 Updates: 1035 (if approved)                                    P. Špaček
-Intended status: Informational                                       ISC
+Intended status: Standards Track                                     ISC
 Expires: 21 July 2024                                           R. Weber
                                                      Akamai Technologies
                                                              D. Lawrence
