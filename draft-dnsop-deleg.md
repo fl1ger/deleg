@@ -10,7 +10,6 @@ ipr: trust200902
 submissiontype: IETF
 workgroup: dnsop
 area: Internet
-category: info
 keyword: Internet-Draft
 
 stand_alone: yes
