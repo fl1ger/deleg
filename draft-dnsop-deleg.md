@@ -318,6 +318,7 @@ If no DELEG RRset is present at the delegation point, and the zone was signed wi
 Including these DELEG, DS, NSEC or NSEC3, and RRSIG RRs increases the size of referral messages. If space does not permit inclusion of these records, including glue address records, the name server MUST set the TC bit.
 
 ### Responding to Queries for Type DELEG
+DELEG records, when present, are included in referrals. When a parent and child are served from the same authoritative server, this referral will not be send since the authoritative server will respond with information from the child zone. In that case the resolver may query for type DELEG.
 
 The DELEG resource record type is unusual in that it appears only on the parent zone's side of a zone cut.  For example, the DELEG RRset for the delegation of "foo.example" is stored in the "example" zone rather than in the "foo.example" zone.  This requires special processing rules for both name servers and resolvers, as the name server for the child zone is authoritative for the name at the zone cut by the normal DNS rules but the child zone does not contain the DELEG RRset.
 
