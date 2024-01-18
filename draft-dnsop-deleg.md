@@ -185,7 +185,7 @@ The DELEG record is authoritative in the parent zone and, if signed, has to be s
 
 While DNSSEC is RECOMMENDED, unsigned DELEG records may be retrieved in a secure way from trusted, Privacy-enabling DNS servers using encrypted transports.
 
-DISCUSS Note: This will lead to cyclical dependencies. A DELEG record can introduce a secure way to communicate with trusted, Privacy-enabling DNS servers. For that, it needs to be DNSSEC signed. 
+FOR DISCUSSION: This will lead to cyclical dependencies. A DELEG record can introduce a secure way to communicate with trusted, Privacy-enabling DNS servers. For that, it needs to be DNSSEC signed. 
 
 ### Preventing downgrade attacks
 
@@ -288,9 +288,10 @@ If a zone operator removes all NS records before DELEG and SVCB records are impl
 
 For latency-conscious zones, the overall packet size of the delegation records from a parent zone to child zone should be taken into account when configuring the NS, DELEG and SVCB records. Resolvers that wish to receive DELEG and SVCB records in response SHOULD advertise and support a buffer size that is as large as possible, to allow the authoritative server to respond without truncating whenever possible.
 
+
 # Implementation
 
-DELEG introduces the concept of signaling capabilities to clients on how to connect and validate a subdomain. This section details the implementation specifics of DELEG for various DNS components.
+This document introduces the concept of signaling capabilities to clients on how to connect and validate a subdomain. This section details the implementation specifics of the DELEG record for various DNS components.
 
 ## Including DELEG RRs in a Zone
 
@@ -315,14 +316,15 @@ If a DELEG RRset is present at the delegation point, the name server MUST return
 
 If no DELEG RRset is present at the delegation point, and the zone was signed with a DNSKEY that has the DELEG flag set, the name server MUST return the NSEC or NSEC3 RR that proves that the DELEG RRset is not present including its associated RRSIG RR along with the DS RRset and its associated RRSIG RR if present and the NS RRset, if present. 
 
-Including these DELEG, DS, NSEC or NSEC3, and RRSIG RRs increases the size of referral messages. If space does not permit inclusion of these records, including glue address records, the name server MUST set the TC bit.
+Including these DELEG, DS, NSEC or NSEC3, and RRSIG RRs increases the size of referral messages. If space does not permit inclusion of these records, including glue address records, the name server MUST set the TC bit on the response.
 
 ### Responding to Queries for Type DELEG
-DELEG records, when present, are included in referrals. When a parent and child are served from the same authoritative server, this referral will not be send since the authoritative server will respond with information from the child zone. In that case the resolver may query for type DELEG.
 
-The DELEG resource record type is unusual in that it appears only on the parent zone's side of a zone cut.  For example, the DELEG RRset for the delegation of "foo.example" is stored in the "example" zone rather than in the "foo.example" zone.  This requires special processing rules for both name servers and resolvers, as the name server for the child zone is authoritative for the name at the zone cut by the normal DNS rules but the child zone does not contain the DELEG RRset.
+DELEG records, when present, are included in referrals. When a parent and child are served from the same authoritative server, this referral will not be sent because the authoritative server will respond with information from the child zone. In that case, the resolver may query for type DELEG.
 
-A DELEG-aware resolver sends queries to the parent zone when looking for a needed DELEG RR at a delegation point. However, special rules are necessary to avoid confusing legacy resolvers which might become involved in processing such a query (for example, in a network configuration that forces a DELEG-aware resolver to channel its queries through a legacy recursive name server).  The rest of this section describes how a DELEG-aware name server processes DELEG queries in order to avoid this problem.
+The DELEG resource record type is unusual in that it appears only on the parent zone's side of a zone cut.  For example, the DELEG RRset for the delegation of "foo.example" is part of the "example" zone rather than in the "foo.example" zone.  This requires special processing rules for both name servers and resolvers because the name server for the child zone is authoritative for the name at the zone cut by the normal DNS rules, but the child zone does not contain the DELEG RRset.
+
+A DELEG-aware resolver sends queries to the parent zone when looking for a DELEG RR at a delegation point. However, special rules are necessary to avoid confusing legacy resolvers which might become involved in processing such a query (for example, in a network configuration that forces a DELEG-aware resolver to channel its queries through a legacy recursive name server).  The rest of this section describes how a DELEG-aware name server processes DELEG queries in order to avoid this problem.
 
 The need for special processing by a DELEG-aware name server only arises when all the following conditions are met:
 
@@ -336,11 +338,11 @@ The need for special processing by a DELEG-aware name server only arises when al
 
 In all other cases, the name server either has some way of obtaining the DELEG RRset or could not have been expected to have the DELEG RRset, so the name server can return either the DELEG RRset or an error response according to the normal processing rules.
 
-If all the above conditions are met, however, the name server is authoritative for SNAME but cannot supply the requested RRset. In this case, the name server MUST return an authoritative "no data" response showing that the DELEG RRset does not exist in the child zone's apex.
+If all the above conditions are met, however, the name server is authoritative for the domain name being searching for, but cannot supply the requested RRset. In this case, the name server MUST return an authoritative "no data" response showing that the DELEG RRset does not exist in the child zone's apex.
 
 ### Priority of DELEG over NS and Glue Address records
 
-DELEG-aware resolvers SHOULD prioritize DELEG records over NS and Glue Address records.
+DELEG-aware resolvers SHOULD prioritize the information in DELEG records over NS and glue address records.
 
 # Privacy Considerations
 
