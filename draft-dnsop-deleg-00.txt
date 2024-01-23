@@ -14,7 +14,7 @@ Expires: 26 July 2024                                           R. Weber
 
 
                      Extensible Delegation for DNS
-                        draft-dnsop-deleg-latest
+                        draft-dnsop-deleg-00
 
 Abstract
 
