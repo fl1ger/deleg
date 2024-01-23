@@ -242,7 +242,7 @@ In the above case, the DELEG record for c1.example.org would only be used when t
 
 ## AliasMode Record Type
 
-In order to take full advantage of the AliasMode of DELEG and SVCB, the parent, child, and resolver must support these records. When supported, the use of the AliasMode will allow zone owners to delegate their zones to another operator with a single record in the parent. AliasMode SVCB records SHOULD appear in the child zone when used in the parent. If a resolver were to encounter an AliasMode DELEG or SVCB record, it would then resolve the name in the TargetName of the original record using SVCB RR type to receive either another AliasMode record or a ServiceMode SVCB record.
+In order to take full advantage of the AliasMode of DELEG and SVCB, the parent, child, and resolver must support these records. When supported, the use of the AliasMode will allow zone owners to delegate their zones to another operator with a single record in the parent. If a resolver were to encounter an AliasMode DELEG or SVCB record, it would then resolve the name in the TargetName of the original record using SVCB RR type to receive either another AliasMode record or a ServiceMode SVCB record.
 
 For example, if the name www.example.com was being resolved, the .com zone may issue a referral by returning the following record:
 
@@ -397,7 +397,7 @@ In December 2023, Roy Arends and Shumon Huque tested two distinct sets of requir
 * legacy resolvers ignore unknown record types in the authority section of referrals.
 * legacy resolvers ignore an unknown key flag in a DNSKEY.
 
-Various recent implmentations were tested (BIND, Unbound, PowerDNS Recursor and Knot) in addition to various public resolver services (Cloudflare, Google, Packet Clearing House). All possible variations of delegations were tested, and there were no issues.
+Various recent implmentations were tested (BIND, Akamai Cacheserve, Unbound, PowerDNS Recursor and Knot) in addition to various public resolver services (Cloudflare, Google, Packet Clearing House). All possible variations of delegations were tested, and there were no issues.
 Further details about the specific testing methodology, please see test-plan.
 
 # Acknowledgments {:unnumbered}

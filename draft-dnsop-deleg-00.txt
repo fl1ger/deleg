@@ -6,11 +6,11 @@ dnsop                                                           T. April
 Internet-Draft                                                          
 Updates: 1035 (if approved)                                    P. Špaček
 Intended status: Standards Track                                     ISC
-Expires: 21 July 2024                                           R. Weber
+Expires: 26 July 2024                                           R. Weber
                                                      Akamai Technologies
                                                              D. Lawrence
                                                               Salesforce
-                                                         18 January 2024
+                                                         23 January 2024
 
 
                      Extensible Delegation for DNS
@@ -46,7 +46,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 21 July 2024.
+   This Internet-Draft will expire on 26 July 2024.
 
 Copyright Notice
 
@@ -338,11 +338,10 @@ config3.example.org.  86400  IN SVCB 1 . ( ipv4hint=192.0.2.54,192.0.2.56
    the parent, child, and resolver must support these records.  When
    supported, the use of the AliasMode will allow zone owners to
    delegate their zones to another operator with a single record in the
-   parent.  AliasMode SVCB records SHOULD appear in the child zone when
-   used in the parent.  If a resolver were to encounter an AliasMode
-   DELEG or SVCB record, it would then resolve the name in the
-   TargetName of the original record using SVCB RR type to receive
-   either another AliasMode record or a ServiceMode SVCB record.
+   parent.  If a resolver were to encounter an AliasMode DELEG or SVCB
+   record, it would then resolve the name in the TargetName of the
+   original record using SVCB RR type to receive either another
+   AliasMode record or a ServiceMode SVCB record.
 
    For example, if the name www.example.com was being resolved, the .com
    zone may issue a referral by returning the following record:
@@ -636,11 +635,12 @@ Appendix A.  Legacy Test Results
 
    *  legacy resolvers ignore an unknown key flag in a DNSKEY.
 
-   Various recent implmentations were tested (BIND, Unbound, PowerDNS
-   Recursor and Knot) in addition to various public resolver services
-   (Cloudflare, Google, Packet Clearing House).  All possible variations
-   of delegations were tested, and there were no issues.  Further
-   details about the specific testing methodology, please see test-plan.
+   Various recent implmentations were tested (BIND, Akamai Cacheserve,
+   Unbound, PowerDNS Recursor and Knot) in addition to various public
+   resolver services (Cloudflare, Google, Packet Clearing House).  All
+   possible variations of delegations were tested, and there were no
+   issues.  Further details about the specific testing methodology,
+   please see test-plan.
 
 Appendix B.  Acknowledgments {:unnumbered}
 
