@@ -1,0 +1,5 @@
+# Automatically generated CODEOWNERS
+# Regenerate with `make update-codeowners`
+draft-dnsop-deleg.md ietf@tapril.net pspacek@isc.org rweber@akamai.com tale@dd.org
+draft-dnsop-deleg-dnssec.md ietf@tapril.net pspacek@isc.org rweber@akamai.com tale@dd.org
+draft-dnsop-deleg-transport.md ietf@tapril.net pspacek@isc.org rweber@akamai.com tale@dd.org

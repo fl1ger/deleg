@@ -176,7 +176,7 @@ Later sections of this document will go into more detail on the resolution proce
 
 ## Goal of the DELEG record
 
-The primary goal of the DELEG records is to provide zone owners a method to signal capabilities to clients how to connect and validate a subdomain. This method coexists with NS records in the same zone. 
+The primary goal of the DELEG records is to provide zone owners a method to signal capabilities to clients how to connect and validate a subdomain. This method coexists with NS records in the same zone.
 
 The DELEG record is authoritative in the parent zone and, if signed, has to be signed with the key of the parent zone. The target of an alias record is an SVCB record that exists and can be signed in the zone it is pointed at, including the child zone.
 
@@ -184,7 +184,7 @@ The DELEG record is authoritative in the parent zone and, if signed, has to be s
 
 While DNSSEC is RECOMMENDED, unsigned DELEG records may be retrieved in a secure way from trusted, Privacy-enabling DNS servers using encrypted transports.
 
-FOR DISCUSSION: This will lead to cyclical dependencies. A DELEG record can introduce a secure way to communicate with trusted, Privacy-enabling DNS servers. For that, it needs to be DNSSEC signed. 
+FOR DISCUSSION: This will lead to cyclical dependencies. A DELEG record can introduce a secure way to communicate with trusted, Privacy-enabling DNS servers. For that, it needs to be DNSSEC signed.
 
 ### Preventing downgrade attacks
 
@@ -192,9 +192,9 @@ A flag in the DNSKEY record is used as a backwards compatible, secure signal to 
 
 Without this secure signal an on-path adversary can remove DELEG records and its RRsig from a response and effectively downgrade this to a legacy DNSSEC signed response.
 
-## Facilities 
+## Facilities
 
-The DELEG record is extensible in such a way that future innovations in the domain name system, such as new methods of secure transport, message encoding, error reporting, etc, does not depend on a re-design of the DNS. 
+The DELEG record is extensible in such a way that future innovations in the domain name system, such as new methods of secure transport, message encoding, error reporting, etc, does not depend on a re-design of the DNS.
 
 # DELEG Record Type
 
@@ -296,7 +296,7 @@ This document introduces the concept of signaling capabilities to clients on how
 
 A DELEG RRset MAY be present at a delegation point.  The DELEG RRset MAY contain multiple records. DELEG RRsets MUST NOT appear at a zone's apex.
 
-A DELEG RRset MAY be present with or without NS or DS RRsets at the delegation point. 
+A DELEG RRset MAY be present with or without NS or DS RRsets at the delegation point.
 
 Construction of a DELEG RR requires knowledge which implies communication between the
 operators of the child and parent zones. This communication is an operational matter not covered by this document.
@@ -313,7 +313,7 @@ If a signed zone contains DELEG records, the zone MUST be signed with a DNSKEY t
 
 If a DELEG RRset is present at the delegation point, the name server MUST return both the DELEG RRset and its associated RRSIG RR in the Authority section along with the DS RRset and its associated RRSIG RR and the NS RRset.
 
-If no DELEG RRset is present at the delegation point, and the zone was signed with a DNSKEY that has the DELEG flag set, the name server MUST return the NSEC or NSEC3 RR that proves that the DELEG RRset is not present including its associated RRSIG RR along with the DS RRset and its associated RRSIG RR if present and the NS RRset, if present. 
+If no DELEG RRset is present at the delegation point, and the zone was signed with a DNSKEY that has the DELEG flag set, the name server MUST return the NSEC or NSEC3 RR that proves that the DELEG RRset is not present including its associated RRSIG RR along with the DS RRset and its associated RRSIG RR if present and the NS RRset, if present.
 
 Including these DELEG, DS, NSEC or NSEC3, and RRSIG RRs increases the size of referral messages. If space does not permit inclusion of these records, including glue address records, the name server MUST set the TC bit on the response.
 
@@ -355,7 +355,7 @@ TODO: Fill this section out
 
 ## Resolution Procedure
 
-An example of a simplified DNS interaction after priming. This is a query for www.example.com type AAAA with DELEG-aware com and example.com authoritative servers. 
+An example of a simplified DNS interaction after priming. This is a query for www.example.com type AAAA with DELEG-aware com and example.com authoritative servers.
 
 * Ask www.example.com qtype AAAA to a.root-servers.net the answer is:
     Answer section: (empty)
@@ -402,7 +402,7 @@ Further details about the specific testing methodology, please see test-plan.
 
 # Acknowledgments {:unnumbered}
 
-This document is heavily based on past work done by Tim April in 
+This document is heavily based on past work done by Tim April in
 {{?I-D.tapril-ns2}} and thus extends the thanks to the people helping on this which are:
 John Levine, Erik Nygren, Jon Reed, Ben Kaduk, Mashooq Muhaimen, Jason Moreau, Jerrod Wiesman, Billy Tiemann, Gordon Marx and Brian Wellington.
 
