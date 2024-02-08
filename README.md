@@ -1,6 +1,6 @@
 #  Extensible Delegation for DNS
 
-This is the working area for the Internet-Draft, "Extensible Delegation for DNS".
+This is the working area for the Internet-Draft, "Extensible Delegation for DNS".  For more information about the proposal, see the [FAQ](FAQ.md).
 
 ## Building the Draft
 
