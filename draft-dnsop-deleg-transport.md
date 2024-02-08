@@ -173,42 +173,34 @@ When TargetName is below the zone cut, DELEG ServiceMode records MUST include "i
 
 ## New transport parameter: "tlsa"
 
-The "tlsa" SvcParamKey is a transport parameter representing a TLSA RRset {{?RFC6698}} to be used when connecting to TargetName using a TLS-based transport. If present, this SvcParam SHOULD match the TLSA records whose base domain ({{?RFC6698, Section 3}}) is TargetName. Due to bootstrapping concerns, this SvcParamKey has been added to the DELEG record as the TLSA records might only be resolveable after the initial connection to the delegated nameserver was established. When this field is not present, certificate validation should be performed by either DANE or by traditional TLS certification validation using trusted root certification authorities.
+The "tlsa" SvcParamKey is a transport parameter representing a TLSA RRset {{?RFC6698}} to be used when connecting to TargetName using a TLS-based transport. If present, this SvcParam MUST contain all the TLSA records whose owner name ({{?RFC6698, Section 3}}) can be inferred from TargetName and the other SvcParams (e.g., "alpn", "port"). Like "ipv4hint"/"ipv6hint", this SvcParam serves two purposes in DELEG:
 
-The SvcParamValue is a non-empty value-list.  The presentation and wire format of each value is the same as the presentation and wire format described for the TLSA record as defined in {{?RFC6698}}, sections 2.1 and 2.2 respectively.  To avoid wasting resources in the parent zone, parents MAY reject RRSets containing "tlsa" SvcParams that use matching type 0 (exact match).
+* When a nameserver serves its own TargetName, the "tlsa" SvcParam MUST be included, because any TLSA queries would encounter a circular dependency.
+* Otherwise, the TLSA query cannot generally be performed until after the SvcParams are received, potentially delaying connection establishment.  The "tlsa" SvcParam might save time in this case.
 
-As a special case, the presentation value "disabled", corresponding to an empty value in wire format, indicates that DANE MUST NOT be used with this record.
+When this SvcParam is not present, certificate validation MAY be performed either using DANE (if TLSA records are present) or by PKI-based TLS certification validation using trusted root certification authorities.
 
-To avoid a circular dependency, "tlsa" MUST appear in any DELEG record that is used to serve its own TargetName.
+The SvcParamValue is a non-empty value-list.  The presentation and wire format of each value is the same as the presentation and wire format described for the TLSA record as defined in {{?RFC6698}}, sections 2.1 and 2.2 respectively.  To avoid wasting space in the parent zone, parents MAY reject RRsets containing "tlsa" SvcParams that use matching type 0 (exact match).
+
+As a special case, the presentation values "enabled" and "disabled" correspond to a single octet value of 1 and 0 in wire format.  A value of "enabled" indicates that TLSA records exist but are not embedded in this record and must be queried directly.  A value of "disabled" indicates that TLSA records do not exist, and DANE MUST NOT be used with this record.  A value of "enabled" SHOULD be accompanied by "mandatory=tlsa", while a value of "disabled" SHOULD NOT.  A value of "enabled" MUST NOT be used when the nameserver serves its own TargetName, as this creates a circular dependency.
 
 Resolvers that support TLS-based transports MUST adopt one of the following behaviors:
 
 1. Use DANE for authentication, and treat any endpoints lacking DANE support as incompatible.
-1. Use PKI for authentication, and treat any DANE-only endpoint as incompatible.  In this behavior, compatibility with `tlsa=disabled` endpoints is REQUIRED.
+1. Use PKI for authentication, and treat any DANE-only endpoint as incompatible.
 1. Support both DANE and PKI for authentication, preferring DANE if it is available for each endpoint.
 
 This SvcParamKey MAY be used in any SVCB context where TLSA usage is defined.
 
-~~~
-;; The server is only authenticatable via DANE.  Any resolver that
-;; lacks DANE support will treat this record as incompatible.
-alpn=doq tlsa="..." mandatory=alpn
-
-;; The server is only authenticatable via DANE, but also offers Do53
-;; services.  All resolvers can access it, but only resolvers with
-;; DANE support will use DoQ.
-alpn=doq tlsa="..."
-
-;; The server is authenticatable via PKI.  If TLSA records exist at
-;; the SVCB-DANE owner names, it is also authenticatable via DANE.
-;; This record cannot be used to serve the zone containing its TargetName.
-alpn=doq
-
-;; The server is only authenticatable via PKI.  Any resolver that
-;; lacks PKI validation support will treat this record as incompatible.
-alpn=doq tlsa=disabled mandatory=alpn
-~~~
-{: title="tlsa SvcParam Examples for DELEG"}
+|--------------------------------------|-------|-----|
+| SvcParams                            | DANE  | PKI |
+| (no params)                          | No    | No  |
+| alpn=doq                             | Maybe | Yes |
+| alpn=doq tlsa="..."                  | Yes   | Yes |
+| alpn=doq tlsa="..." mandatory=tlsa   | Yes   | No  |
+| alpn=doq tlsa=enabled mandatory=tlsa | Yes   | No  |
+| alpn=doq tlsa=disabled               | No    | Yes |
+{: title="Representation of all combinations of DANE and PKI support"}
 
 # Identifying the Server
 
