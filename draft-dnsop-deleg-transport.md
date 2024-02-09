@@ -192,8 +192,8 @@ Resolvers that support TLS-based transports MUST adopt one of the following beha
 
 This SvcParamKey MAY be used in any SVCB context where TLSA usage is defined.
 
-|--------------------------------------|-------|-----|
 | SvcParams                            | DANE  | PKI |
+|--------------------------------------|-------|-----|
 | (no params)                          | No    | No  |
 | alpn=doq                             | Maybe | Yes |
 | alpn=doq tlsa="..."                  | Yes   | Yes |
