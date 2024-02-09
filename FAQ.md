@@ -32,7 +32,7 @@ In it simplest usage, DELEG is used similarly to current NS records, and does no
 
 Currently, the only signals conveying information from parent to child are NS records and DS records.  Neither of these are suitable without changes to both parent servers and resolvers.
 
-Given the necessity for protocol changes, the DELEG proposal attempts to "do it right", aiming for a purpose-built design with a minimum of legacy baggage.
+Given the necessity for protocol changes, the DELEG proposal attempts to "do it right", aiming for a purpose-built design with a minimum of legacy baggage which future protocol extensions will be able to build upon.
 
 ### Why can't we use NS records?
 
