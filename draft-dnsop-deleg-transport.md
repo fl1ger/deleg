@@ -104,7 +104,7 @@ contributor:
 
 --- abstract
 
-This document extends DELEG record, and SVCB records pointed to by DELEG record, as defined in `{{?I-D.draft-dnsop-deleg}}`, with ability to specify transport protocols and authentication parameters supported by name servers.
+This document extends DELEG record, and SVCB records pointed to by DELEG record, as defined in {{!I-D.dnsop-deleg}}, with ability to specify transport protocols and authentication parameters supported by name servers.
 
 --- middle
 
@@ -175,7 +175,7 @@ When TargetName is below the zone cut, DELEG ServiceMode records MUST include "i
 
 The "tlsa" SvcParamKey is a transport parameter representing a TLSA RRset {{?RFC6698}} to be used when connecting to TargetName using a TLS-based transport. If present, this SvcParam MUST contain all the TLSA records whose owner name ({{?RFC6698, Section 3}}) can be inferred from TargetName and the other SvcParams (e.g., "alpn", "port"). Like "ipv4hint"/"ipv6hint", this SvcParam serves two purposes in DELEG:
 
-* When a nameserver serves its own TargetName, the "tlsa" SvcParam MUST be included, because any TLSA queries would encounter a circular dependency.
+* When resolution of the TLSA records would encounter a cyclic dependency, the "tlsa" SvcParam MUST be included.
 * Otherwise, the TLSA query cannot generally be performed until after the SvcParams are received, potentially delaying connection establishment.  The "tlsa" SvcParam might save time in this case.
 
 When this SvcParam is not present, certificate validation MAY be performed either using DANE (if TLSA records are present) or by PKI-based TLS certification validation using trusted root certification authorities.
@@ -190,15 +190,18 @@ Resolvers that support TLS-based transports MUST adopt one of the following beha
 1. Use PKI for authentication, and treat any DANE-only endpoint as incompatible.
 1. Support both DANE and PKI for authentication, preferring DANE if it is available for each endpoint.
 
+When a DANE-capable resolver encounters a DELEG or SVCB record containing TLSA RDATA, it MUST NOT perform any TLSA queries or make use of any TLSA record's RDATA, as this indicates a potential cyclic dependency and using cached TLSA records would introduce unnecessary variability in behavior.
+
 This SvcParamKey MAY be used in any SVCB context where TLSA usage is defined.
 
 | SvcParams                            | DANE  | PKI |
 |--------------------------------------|-------|-----|
 | (no params)                          | No    | No  |
 | alpn=doq                             | Maybe | Yes |
+| alpn=doq tlsa=enabled                | Yes   | Yes |
 | alpn=doq tlsa="..."                  | Yes   | Yes |
-| alpn=doq tlsa="..." mandatory=tlsa   | Yes   | No  |
 | alpn=doq tlsa=enabled mandatory=tlsa | Yes   | No  |
+| alpn=doq tlsa="..." mandatory=tlsa   | Yes   | No  |
 | alpn=doq tlsa=disabled               | No    | Yes |
 {: title="Representation of all combinations of DANE and PKI support"}
 
@@ -235,9 +238,11 @@ _853._tcp.x1234.opshost.example. TLSA 2 0 1 ABC...
 ~~~Zone
 example.com. DELEG 1 ns-v4.example.com. (
                 alpn=dot
+                tlsa="3 ..."
                 ipv4hint=192.0.2.54 )
 example.com. DELEG 1 ns-v6.example.com. (
                 alpn=dot
+                tlsa="3 ..."
                 ipv6hint=2001:db8:2423::3 )
 ~~~
 {: title="SNI is 'ns-v4.example.com' for IPv4, and 'ns-v6.example.com' for IPv6"}
