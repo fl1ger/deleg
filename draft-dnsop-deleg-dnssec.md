@@ -188,7 +188,7 @@ DNSSEC chain of trust provided by the "sharedds" parameter will be taken into ac
 # DNSSEC and DELEG {#dnssec}
 
 TODO: Should DS at parent serve as fallback if the SVCB does not have sharedds=? What if there is DS at the parent side and sharedds= in the SVCB?
-If there are any DS records on the same name as a DELEG record, ... 
+If there are any DS records on the same name as a DELEG record, ...
 
 When using the "sharedds" SvcParamKey, each DELEG record MAY indicate different DS contents.  This allows delegation of a zone to multiple signers with different DNSKEYs, and allows those configurations to change independently.  Note that a zone is only as secure as its least secure "sharedds" SvcParam.
 

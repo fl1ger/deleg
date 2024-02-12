@@ -265,6 +265,8 @@ The TargetName of an SVCB or DELEG record MAY be the owner of a CNAME record. Re
 
 Special care should be taken by both the zone owner and the delegated zone operator to ensure that a lookup loop is not created by having two AliasMode records rely on each other to serve the zone. Doing so may result in a resolution loop, and likely a denial of service. The mechanism on following CNAME and SVCB alias above should prevent exhaustion of server resources. If a resolution can not be found after 4 lookups the server should reply with a SERVFAIL error code.
 
+If queries for a DELEG or SVCB ServiceMode record's TargetName would have a cyclic dependency on this RRset, this record MUST include at least one "ipv4hint" or "ipv6hint" SvcParam.  If either of these SvcParams is present in a DELEG or SVCB ServiceMode record, the resolver MUST only use IP addresses from these SvcParams when making use of this record, as their presence indicates a potential cyclic dependency and using cached A/AAAA records would introduce unnecessary variability in behavior.
+
 ## Deployment Considerations
 
 The DELEG and SVCB records are intended to replace the NS record while also adding additional functionality in order to support additional transports for the DNS. Below are discussions of considerations for deployment.
