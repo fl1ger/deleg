@@ -230,7 +230,7 @@ example.com. DELEG 0 ns-1234.operator.example.
 ;; The operator.example. zone is presumed to be signed.
 ns-1234.operator.example.          SVCB 1 x1234.opshost.example. alpn=dot
 
-;; The opshost.example. zone is also presuemd to be signed.
+;; The opshost.example. zone is also presumed to be signed.
 _853._tcp.x1234.opshost.example. TLSA 2 0 1 ABC...
 ~~~
 {: title="SNI is 'x1234.opshost.example' if the resolver supports DANE, otherwise 'ns-1234.operator.example'"}
