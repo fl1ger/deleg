@@ -19,7 +19,7 @@ author:
 -
     ins: T. April
     name: Tim April
-    organization:
+    organization: Google, LLC
     email: ietf@tapril.net
 -
     ins: P.Špaček
@@ -140,11 +140,15 @@ Terminology regarding the Domain Name System comes from {{?BCP219}}, with additi
 * legacy name servers: An authoritative server that does not support the DELEG record.
 * legacy resolvers: A resolver that does not support the DELEG record.
 
-## Motivation for DELEG
+## Motivation and Design Requirements for DELEG
 
-* There is no secure way to signal capabilities or new features of an authoritative server, such as authenticated DNS-over-TLS. A resolver must resort to trial-and-error methods that can potentially fall victim to downgrade attacks.
-* Delegation point NS records and glue address records are, by design, not DNSSEC signed. This presents a leap of faith. Spoofed delegation point NS records can be detected eventually if the delegated domain was signed, but only after traffic was sent to the (potentially) spoofed endpoint.
-* The Registry, Registrar, Registrant (RRR) model has no formally defined role for  DNS operators. Consequently, registrants are the channel between DNS operators and registries/registrars on purely operational elements, such as adding NS records, modify DS records when rolling keys, etc. Deleg's AliasMode allows the registrants to delegate these facilities to a DNS Operator.
+NS based delegation supports DNS over UDP and TCP, but does not have the ability to provide additional connection information like how to contact an authoritative server over an encrypted transport or which port to use when contacting the delegated server. DELEG was designed to support communicating this type of information and more, taking into account various design goals and tradeoffs. The design requirements for DELEG were:
+
+* Deliberate and Extensible Protocol: A distinct DNS record served from the parent was selected to provide a deliberate and new signal that additional information was available for how a resolver can communicate with an authoritative nameserver. The record existing in the parent eliminates the need for a resolver to send additional queries to a delegated resolver in an attempt to learn connection parameters. Introducing a new resource record type rather than using reserved fields from another record type enables future expansion of functionality beyond one or a small number of bits of information for a delegation. This tradeoff does have the limitation that adoption at the root and TLD levels of the hierarchy may be delayed, but this approach can lead to a cleaner and easier to support solution.
+* Extensibility: DELEG as described in this document could be implemented through an existing Resource Record like the TXT record, but doing so would limit the ability to build on the record in the future. To support extending the data that can be communicated, the SVCB record format was used for DELEG to support future growth.
+* Support for Abstract Delegation: the SVCB record format has support for an Alias Form record. In the case of DELEG, the AliasForm record enables a domain owner to indicate that their zone will be hosted elsewhere, like a DNS service provider, in a way that enables the service provider to update their authoritative information without coordination with the domain owner, domain registrar. 
+* Authenticated and Parent Centric: While NS records are authoritative at the child, some resolver algorithms are parent centric while others are child centric. With DELEG, this ambiguity is removed and parent centricity and authority is specified. This decision also enables the records to be signed in the parent zone, reducing the potential risk of a denial of service for clients when being delegated. Additionally, a parent centric record is required to support resolution with a cold cache and duplication of data in the child zone can lead to inconsistencies as the records change over time.
+* Able to coexist in the ecosystem: DELEG is defined as being a record in the parent, signifying a zone cut. As a result of that design decision, additional effort and time will be required to deploy DELEG to all levels of the DNS hierarchy, especially when considering the Root zone and TLDs. To support the deployment, DELEG must be able to coexist within the ecosystem with the existing NS based methods of resolution. Testing has been done to show that many deployed resolvers can handle DELEG and NS records side-by-side to enable a rollout. 
 
 ## Introductory Examples
 
