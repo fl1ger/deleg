@@ -151,7 +151,7 @@ NS based delegation supports DNS over UDP and TCP, but does not have the ability
 
 # DELEG Record Type
 
-The DELEG record wire format is the same as the SVCB record defined in {{?RFC9460}}, but with a different value for the resource record type of TBD. For extensions SVCB and DELEG use Service Parameter Keys (SvcParamKeys) and new SvcParamKeys that might be needed also also will use the existing IANA Registry. 
+The DELEG record wire format is the same as the SVCB record defined in {{?RFC9460}}, but with a different value for the resource record type of TBD. For extensions SVCB and DELEG use Service Parameter Keys (SvcParamKeys) and new SvcParamKeys that might be needed also will use the existing IANA Registry. 
 
 The SVCB record allows for two types of records, the AliasMode and the ServiceMode. The DELEG record uses both. The Target Name either points to a set of name servers answering for the delegated domain if used in ServiceMode or to an SVCB record in AliasMode that then has to be interpreted further to get to the actual name server. The AliasMode DELEG record might point to another AliasMode SVCB record or a CNAME. In order to not allow unbound indirection of DELEG records the maximum number of indirections, CNAME or AliasMode SVCB is 4. The SvcPriority field either can be 0 for AliasMode or 1 for ServiceMode. Different priorities are not used for DELEG delegations. 
 
