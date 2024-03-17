@@ -151,7 +151,19 @@ NS based delegation supports DNS over UDP and TCP, but does not have the ability
 
 # DELEG Record Type
 
-The SVCB record allows for two types of records, the AliasMode and the ServiceMode. The DELEG record takes advantage of both and each will be described below in depth. The wire format of and the registry for the DELEG record is the same as SVCB record defined in  {{?RFC9460}}
+The DELEG record wire format is the same as the SVCB record defined in {{?RFC9460}}, but with a different value for the resource record type of TBD. The IANA registry for for further Service Parameter Keys that might be needed also is the one used for SVCB.
+
+The SVCB record allows for two types of records, the AliasMode and the ServiceMode. The DELEG record uses both. The Target Name either points to a set of name servers answering for the delegated domain if used in ServiceMode or to an SVCB record in AliasMode that then has to be interpreted further to get to the actual name server. The AliasMode DELEG record might point to another AliasMode SVCB record or a CNAME. In order to not allow unbound indirection of DELEG records the maximum number of indirections, CNAME or AliasMode SVCB is 4. The SvcPriority field either can be 0 for AliasMode or 1 for ServiceMode. Different priorities are not used for DELEG delegations. 
+
+## Including DELEG RRs in a Zone
+
+A DELEG RRset MAY be present at a delegation point.  The DELEG RRset MAY contain multiple records. DELEG RRsets MUST NOT appear at a zone's apex.
+
+A DELEG RRset MAY be present with or without NS or DS RRsets at the delegation point. 
+
+Construction of a DELEG RR requires knowledge which implies communication between the
+operators of the child and parent zones. This communication is an operational matter not covered by this document.
+
 
 ## Difference between the records
 
@@ -198,6 +210,12 @@ While DNSSEC is RECOMMENDED, unsigned DELEG records may be retrieved in a secure
 
 FOR DISCUSSION: This will lead to cyclical dependencies. A DELEG record can introduce a secure way to communicate with trusted, Privacy-enabling DNS servers. For that, it needs to be DNSSEC signed. 
 
+### Signing DELEG RRs
+
+A DELEG RRset MUST be DNSSEC signed if the zone is signed.
+
+If a signed zone contains DELEG records, the zone MUST be signed with a DNSKEY that has the DELEG flag set.
+
 ### Preventing downgrade attacks
 
 A flag in the DNSKEY record is used as a backwards compatible, secure signal to indicate to a resolver that DELEG records are present or that there is an authenticated denial of a DELEG record. Legacy resolvers will ignore this flag and use the DNSKEY as is.
@@ -205,18 +223,7 @@ A flag in the DNSKEY record is used as a backwards compatible, secure signal to 
 Without this secure signal an on-path adversary can remove DELEG records and its RRsig from a response and effectively downgrade this to a legacy DNSSEC signed response.
 
 
-
-## AliasMode Record Type
-
-In order to take full advantage of the AliasMode of DELEG and SVCB, the parent, child, and resolver must support these records. When supported, the use of the AliasMode will allow zone owners to delegate their zones to another operator with a single record in the parent. If a resolver were to encounter an AliasMode DELEG or SVCB record, it would then resolve the name in the TargetName of the original record using SVCB RR type to receive either another AliasMode record or a ServiceMode SVCB record.
-
-For example, if the name www.example.com was being resolved, the .com zone may issue a referral by returning the following record:
-
-    example.com.    86400    IN  DELEG     0   config1.example.net.
-
-The above record would indicate to the resolver that in order to obtain the authoritative nameserver records for example.com, the resolver should resolve the RR type SVCB for the name config1.example.net.
-
-### Multiple Service Providers
+## Multiple Service Providers
 
 Some zone owners may wish to use multiple providers to serve their zone, in which case multiple DELEG AliasMode records can be used. In the event that multiple DELEG AliasMode records are encountered, the resolver SHOULD treat those as a union the same way this is done with NS records, picking one at random for the first lookup and eventually discovering the others. How exactly DNS questions are directed and split between configuration sets is implementation specific:
 
@@ -225,33 +232,11 @@ Some zone owners may wish to use multiple providers to serve their zone, in whic
 
 \[ DRAFT NOTE: SVCB says that there "SHOULD only have a single RR". This ignores that but keeps the randomization part. Section 2.4.2 of SVCB \]
 
-### Loop Prevention
+## Loop Prevention
 
 The TargetName of an SVCB or DELEG record MAY be the owner of a CNAME record. Resolvers MUST follow CNAMEs as well as further alias SVCB records as normal, but MUST not allow more then 4 total lookups per delegation, with the first one being the DELEG referral and then 3 SVCB/CNAME lookups maximal.
 
 Special care should be taken by both the zone owner and the delegated zone operator to ensure that a lookup loop is not created by having two AliasMode records rely on each other to serve the zone. Doing so may result in a resolution loop, and likely a denial of service. The mechanism on following CNAME and SVCB alias above should prevent exhaustion of server resources. If a resolution can not be found after 4 lookups the server should reply with a SERVFAIL error code.
-
-## Deployment Considerations
-
-The DELEG and SVCB records are intended to replace the NS record while also adding additional functionality in order to support additional transports for the DNS. Below are discussions of considerations for deployment.
-
-### AliasMode and ServiceMode in the Parent
-
-Both the AliasMode and ServiceMode records can be returned for the DELEG record from the parent. This is different from the SCVB  {{?RFC9460}} specification and only applies for the DELEG RRSet in the parent.
-
-
-### Rollout
-
-When introduced, the DELEG and SVCB records might not initially be supported by the DNS root or TLD operators. Zone owners may place these records into their zones before the zones above them have done so. However, doing so is only useful for further delegations down the tree as an SVCB record at the zone apex alone does not indicate a new delegation type. The only way to discover new delegations is with the DELEG record at the parent.
-
-
-### Availability
-
-If a zone operator removes all NS records before DELEG and SVCB records are implemented by all clients, the availability of their zones will be impacted for the clients that are using non-supporting resolvers. In some cases, this may be a desired quality, but should be noted by zone owners and operators.
-
-## Response Size Considerations
-
-For latency-conscious zones, the overall packet size of the delegation records from a parent zone to child zone should be taken into account when configuring the NS, DELEG and SVCB records. Resolvers that wish to receive DELEG and SVCB records in response SHOULD advertise and support a buffer size that is as large as possible, to allow the authoritative server to respond without truncating whenever possible.
 
 #  Examples
 
@@ -286,20 +271,28 @@ Later sections of this document will go into more detail on the resolution proce
 
 This document introduces the concept of signaling capabilities to clients on how to connect and validate a subdomain. This section details the implementation specifics of the DELEG record for various DNS components.
 
-## Including DELEG RRs in a Zone
+## Deployment Considerations
 
-A DELEG RRset MAY be present at a delegation point.  The DELEG RRset MAY contain multiple records. DELEG RRsets MUST NOT appear at a zone's apex.
+The DELEG and SVCB records are intended to replace the NS record while also adding additional functionality in order to support additional transports for the DNS. Below are discussions of considerations for deployment.
 
-A DELEG RRset MAY be present with or without NS or DS RRsets at the delegation point. 
+### AliasMode and ServiceMode in the Parent
 
-Construction of a DELEG RR requires knowledge which implies communication between the
-operators of the child and parent zones. This communication is an operational matter not covered by this document.
+Both the AliasMode and ServiceMode records can be returned for the DELEG record from the parent. This is different from the SCVB  {{?RFC9460}} specification and only applies for the DELEG RRSet in the parent.
 
-### Signing DELEG RRs
 
-A DELEG RRset MUST be DNSSEC signed if the zone is signed.
+### Rollout
 
-If a signed zone contains DELEG records, the zone MUST be signed with a DNSKEY that has the DELEG flag set.
+When introduced, the DELEG and SVCB records might not initially be supported by the DNS root or TLD operators. Zone owners may place these records into their zones before the zones above them have done so. However, doing so is only useful for further delegations down the tree as an SVCB record at the zone apex alone does not indicate a new delegation type. The only way to discover new delegations is with the DELEG record at the parent.
+
+
+### Availability
+
+If a zone operator removes all NS records before DELEG and SVCB records are implemented by all clients, the availability of their zones will be impacted for the clients that are using non-supporting resolvers. In some cases, this may be a desired quality, but should be noted by zone owners and operators.
+
+## Response Size Considerations
+
+For latency-conscious zones, the overall packet size of the delegation records from a parent zone to child zone should be taken into account when configuring the NS, DELEG and SVCB records. Resolvers that wish to receive DELEG and SVCB records in response SHOULD advertise and support a buffer size that is as large as possible, to allow the authoritative server to respond without truncating whenever possible.
+
 
 ## Authoritative Name Servers
 
