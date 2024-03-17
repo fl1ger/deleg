@@ -251,7 +251,7 @@ To introduce DELEG record, this example shows the authority section of a DNS res
 
 In this example, the authoritative nameserver is delegating using the same parameters as regular DNS, but the delegation as well as the glue can be signed.
 
-Like in SVCB, DELEG also offer the ability to use the Alias form of delegation. The example below shows an example where example.com is being delegated with a DELEG AliasMode record which can then be further resolved using standard SVCB to locate the actual parameters.
+Like with SVCB, DELEG also offer the ability to use the Alias form of delegation. The example below shows an example where example.com is being delegated with a DELEG AliasMode record which can then be further resolved using standard SVCB to locate the actual parameters.
 
     example.com.  86400  IN DELEG 0   config2.example.net.
     example.com.  86400  IN NS     ns2.example.net.
