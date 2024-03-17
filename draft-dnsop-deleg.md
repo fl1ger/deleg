@@ -115,7 +115,7 @@ An NS record contains the hostname of the nameserver for the delegated namespace
 
 # Introduction
 
-In the Domain Name System {{!STD13}}, subdomains within the domain name hierarchy are indicated by delegations to servers which are authoritative for their portion of the namespace.  The DNS records that do this, called NS records, contain hostnames of nameservers, which resolve to addresses.  No other information is available to the resolver. It is limited to connect to the authoritative servers over UDP and TCP port 53. nThis limitation is a barrier for efficient introduction of new DNS technology. 
+In the Domain Name System {{!STD13}}, subdomains within the domain name hierarchy are indicated by delegations to servers which are authoritative for their portion of the namespace.  The DNS records that do this, called NS records, contain hostnames of nameservers, which resolve to addresses.  No other information is available to the resolver. It is limited to connect to the authoritative servers over UDP and TCP port 53. This limitation is a barrier for efficient introduction of new DNS technology. 
 
 The proposed DELEG record type remedies this problem by providing extensible parameters to indicate capabilities that a resolver may use for the delegated authority, for example that it should be contacted using a transport mechanism other than DNS over UDP or TCP on port 53.
 
@@ -147,11 +147,11 @@ NS based delegation supports DNS over UDP and TCP, but does not have the ability
 * Support for Abstract Delegation: the SVCB record format has support for an Alias Form record. In the case of DELEG, the AliasForm record enables a domain owner to indicate that their zone will be hosted elsewhere, like a DNS service provider, in a way that enables the service provider to update their authoritative information without coordination with the domain owner, domain registrar. 
 * Authenticated and Parent Centric: While NS records are authoritative at the child, some resolver algorithms are parent centric while others are child centric. With DELEG, this ambiguity is removed and parent centricity and authority is specified. This decision also enables the records to be signed in the parent zone, reducing the potential risk of a denial of service for clients when being delegated. Additionally, a parent centric record is required to support resolution with a cold cache and duplication of data in the child zone can lead to inconsistencies as the records change over time.
 * Able to coexist in the ecosystem: DELEG is defined as being a record in the parent, signifying a zone cut. As a result of that design decision, additional effort and time will be required to deploy DELEG to all levels of the DNS hierarchy, especially when considering the Root zone and TLDs. To support the deployment, DELEG must be able to coexist within the ecosystem with the existing NS based methods of resolution. Testing has been done to show that many deployed resolvers can handle DELEG and NS records side-by-side to enable a rollout. 
-* While DELEG can be used in an unsigned zone, it is recommended to use DNSSEC. The DELEG record must be signed or denied in the parent zone when it is signed. Certain security propperties might not be available and hence certain features only will work when the DELEG record is signed
+* While DELEG can be used in an unsigned zone, it is recommended to use DNSSEC. The DELEG record must be signed or denied in the parent zone when it is signed. Without DNSSEC, certain security properties might not be available and hence certain features only will work when the DELEG record is signed.
 
 # DELEG Record Type
 
-The DELEG record wire format is the same as the SVCB record defined in {{?RFC9460}}, but with a different value for the resource record type of TBD. The IANA registry for for further Service Parameter Keys that might be needed also is the one used for SVCB.
+The DELEG record wire format is the same as the SVCB record defined in {{?RFC9460}}, but with a different value for the resource record type of TBD. For extensions SVCB and DELEG use Service Parameter Keys (SvcParamKeys) and new SvcParamKeys that might be needed also also will use the existing IANA Registry. 
 
 The SVCB record allows for two types of records, the AliasMode and the ServiceMode. The DELEG record uses both. The Target Name either points to a set of name servers answering for the delegated domain if used in ServiceMode or to an SVCB record in AliasMode that then has to be interpreted further to get to the actual name server. The AliasMode DELEG record might point to another AliasMode SVCB record or a CNAME. In order to not allow unbound indirection of DELEG records the maximum number of indirections, CNAME or AliasMode SVCB is 4. The SvcPriority field either can be 0 for AliasMode or 1 for ServiceMode. Different priorities are not used for DELEG delegations. 
 
@@ -282,7 +282,7 @@ Both the AliasMode and ServiceMode records can be returned for the DELEG record 
 
 ### Rollout
 
-When introduced, the DELEG and SVCB records might not initially be supported by the DNS root or TLD operators. Zone owners may place these records into their zones before the zones above them have done so. However, doing so is only useful for further delegations down the tree as an SVCB record at the zone apex alone does not indicate a new delegation type. The only way to discover new delegations is with the DELEG record at the parent.
+When introduced, the DELEG and SVCB records might not initially be supported by the DNS root or TLD operators. So for initial usage zone owners may place DELEG records into their zones for delegating down the tree into child domains of their zones, as the only way to discover new delegations is with the DELEG record at the parent. When AliasMode is used to the SVCB record the Target SVCB has to exists.
 
 
 ### Availability
