@@ -106,6 +106,10 @@ contributor:
     name: Manu Bretelle
     organization: Meta
     email: chantr4@gmail.com
+-
+    name: Bob Halley
+    organization: Cloudflare
+    email: bhalley@cloudflare.com
 
 --- abstract
 A delegation in the Domain Name System (DNS) is a mechanism that enables efficient and distributed management of the DNS namespace. It involves delegating authority over subdomains to specific DNS servers via NS records, allowing for a hierarchical structure and distributing the responsibility for maintaining DNS records.
@@ -214,11 +218,11 @@ FOR DISCUSSION: This will lead to cyclical dependencies. A DELEG record can intr
 
 A DELEG RRset MUST be DNSSEC signed if the zone is signed.
 
-If a signed zone contains DELEG records, the zone MUST be signed with a DNSKEY that has the DELEG flag set.
+If a signed zone contains DELEG records, the referral response containing DELEG records MUST be signed with a DNSKEY that has the DELEG flag set.
 
 ### Preventing downgrade attacks
 
-A flag in the DNSKEY record is used as a backwards compatible, secure signal to indicate to a resolver that DELEG records are present or that there is an authenticated denial of a DELEG record. Legacy resolvers will ignore this flag and use the DNSKEY as is.
+A flag in the DNSKEY record signing the delegation is used as a backwards compatible, secure signal to indicate to a resolver that DELEG records are present or that there is an authenticated denial of a DELEG record. Legacy resolvers will ignore this flag and use the DNSKEY as is.
 
 Without this secure signal an on-path adversary can remove DELEG records and its RRsig from a response and effectively downgrade this to a legacy DNSSEC signed response.
 
@@ -300,7 +304,7 @@ For latency-conscious zones, the overall packet size of the delegation records f
 
 If a DELEG RRset is present at the delegation point, the name server MUST return both the DELEG RRset and its associated RRSIG RR in the Authority section along with the DS RRset and its associated RRSIG RR and the NS RRset.
 
-If no DELEG RRset is present at the delegation point, and the zone was signed with a DNSKEY that has the DELEG flag set, the name server MUST return the NSEC or NSEC3 RR that proves that the DELEG RRset is not present including its associated RRSIG RR along with the DS RRset and its associated RRSIG RR if present and the NS RRset, if present. 
+If no DELEG RRset is present at the delegation point, and the delegation was signed with a DNSKEY that has the DELEG flag set, the name server MUST return the NSEC or NSEC3 RR that proves that the DELEG RRset is not present including its associated RRSIG RR along with the DS RRset and its associated RRSIG RR if present and the NS RRset, if present. 
 
 Including these DELEG, DS, NSEC or NSEC3, and RRSIG RRs increases the size of referral messages. If space does not permit inclusion of these records, including glue address records, the name server MUST set the TC bit on the response.
 
