@@ -332,7 +332,7 @@ If all the above conditions are met, however, the name server is authoritative f
 
 ### Priority of DELEG over NS and Glue Address records
 
-DELEG-aware resolvers SHOULD prioritize the information in DELEG records over NS and glue address records.
+DELEG-aware resolvers SHOULD prioritize the information in DELEG records over NS and glue address records. Glue records MUST NOT be considered for a DELEG delegation. If there is an in domain name server for a non alias mode DELEG record ipv4hint and ipv6hint MUST be used to convey the IP address. An a alias mode DELEG record can not have an in domain name server.
 
 # Privacy Considerations
 
