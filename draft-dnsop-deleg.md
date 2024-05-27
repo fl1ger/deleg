@@ -293,10 +293,26 @@ When introduced, the DELEG and SVCB records might not initially be supported by 
 
 If a zone operator removes all NS records before DELEG and SVCB records are implemented by all clients, the availability of their zones will be impacted for the clients that are using non-supporting resolvers. In some cases, this may be a desired quality, but should be noted by zone owners and operators.
 
+## Signaling DELEG support
+
+For a long time there will be both DELEG and NS needed for delegation. As both methods should be configured to get to a proper resolution it is not neccassary to send both in a referral response. We therefore purpose an EDNS flag to be use similar to the DO Bit for DNSSEC to be used to signal that the sender understands DELEG and does not need NS or glue information in the referral.
+
+This bit is referred to as the "DELEG" (DE) bit.  In the context of the EDNS0 OPT meta-RR, the DO bit is the first bit of the third and fourth bytes of the "extended RCODE and flags" portion of the EDNS0 OPT meta-RR, structured as follows:
+
+                +0 (MSB)                +1 (LSB)
+         +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+      0: |   EXTENDED-RCODE      |       VERSION         |
+         +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+      2: |DO|DE|                 Z                       |
+         +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+
+Setting the DE bit to one in a query indicates to the server that the resolver is able to accept delegations using DELEG only. The DO bit cleared (set to zero) indicates the resolver is unprepared to handle DELEG and hence can only be served NS, DS and glue in a delegation response. The DE bit of the query MUST be copied in the response.
+
 ## Response Size Considerations
 
 For latency-conscious zones, the overall packet size of the delegation records from a parent zone to child zone should be taken into account when configuring the NS, DELEG and SVCB records. Resolvers that wish to receive DELEG and SVCB records in response SHOULD advertise and support a buffer size that is as large as possible, to allow the authoritative server to respond without truncating whenever possible.
 
+As 
 
 ## Authoritative Name Servers
 
@@ -379,6 +395,9 @@ When a delegation using DELEG to a child is present, the resolver MUST use it an
 DELEG will use the SVCB IANA registry definitions in section 14.3 of {{!RFC9460}}.
 
 The IANA has assigned a bit in the DNSKEY flags field (see Section 7 of {{!RFC4034}} for the DELEG bit (N).
+ 
+EDNS0 {{!RFC6891}} defines 16 bits as extended flags in the OPT record. This draft adds the DE bit.
+  
 --- back
 
 # Legacy Test Results {#Testing}
