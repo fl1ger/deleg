@@ -153,6 +153,16 @@ NS based delegation supports DNS over UDP and TCP, but does not have the ability
 * Able to coexist in the ecosystem: DELEG is defined as being a record in the parent, signifying a zone cut. As a result of that design decision, additional effort and time will be required to deploy DELEG to all levels of the DNS hierarchy, especially when considering the Root zone and TLDs. To support the deployment, DELEG must be able to coexist within the ecosystem with the existing NS based methods of resolution. Testing has been done to show that many deployed resolvers can handle DELEG and NS records side-by-side to enable a rollout. 
 * While DELEG can be used in an unsigned zone, it is recommended to use DNSSEC. The DELEG record must be signed or denied in the parent zone when it is signed. Without DNSSEC, certain security properties might not be available and hence certain features only will work when the DELEG record is signed.
 
+## Success factors
+
+Objectives of the DELEG design are listed in this section.  The list may change over time as the mission may expand or contract.
+
+Objective 1 : Replace the functionality of the NS and DS resource record sets and enhance by including full transport service address information (e.g., TCP's port number), including glue records, and other information related to consulting a different DNS server.  The purpose of this objective is to support seamless modification of the DNS protocol.
+
+Objective 2 : Expose the role of DNS operations, enabling a zone administrator to make use of multiple DNS providers who may have different operational policies.  This supports having multiple providers for resoliency and stability in steady state and the ability to transition from one provider to another during a transitional state.  The purpose of the objective to identify DNS operators enables the use of security credentials to automatically update delegation information, such as new name servers, new DNSSEC keys, etc.
+
+Objective 3 : Denote when the delegation is an administrative boundary, that is, a delegation to a different zone administration.  The purpose of this objective is to support applications that need to know whether to extend security policies to a subzone, such as web cookies.
+
 # DELEG Record Type
 
 The DELEG record wire format is the same as the SVCB record defined in {{?RFC9460}}, but with a different value for the resource record type of TBD. For extensions SVCB and DELEG use Service Parameter Keys (SvcParamKeys) and new SvcParamKeys that might be needed also will use the existing IANA Registry. 
