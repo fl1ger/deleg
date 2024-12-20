@@ -392,12 +392,14 @@ When a delegation using DELEG to a child is present, the resolver MUST use it an
 
 # IANA Considerations
 
-DELEG will use the SVCB IANA registry definitions in section 14.3 of {{!RFC9460}}.
+IANA is requested to allocate the DELEG RR in the Resource Record (RR) TYPEs registry, with the meaning of "enchanced delegation information" and referencing this document.
 
-The IANA has assigned a bit in the DNSKEY flags field (see Section 7 of {{!RFC4034}} for the DELEG bit (N).
- 
-EDNS0 {{!RFC6891}} defines 16 bits as extended flags in the OPT record. This draft adds the DE bit.
-  
+IANA is requested to assign a new bit in the DNSKEY RR Flags registry ({{!RFC4034}}) for the DELEG bit (N), with the descripion "DELEG" and referencing this document.
+
+IANA is requested to assign a bit from the EDNS Header Flags registry ({{!RFC6891}}), with the abbreviation DE, the description "DELEG-only answer OK" and referencing this document.
+
+For the RDATA parameters to a DELEG RR, the DNS Service Bindings (SVCB) registry ({{!RFC9460}}) is used.  This document requests no new assignments to that registry, though it is expected that future DELEG work will.  
+
 --- back
 
 # Legacy Test Results {#Testing}
