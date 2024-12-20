@@ -104,76 +104,82 @@ contributor:
 
 --- abstract
 
-This document extends DELEG record, and SVCB records pointed to by DELEG record, as defined in {{?I-D.draft-dnsop-deleg}}, with ability to specify transport protocols and authentication parameters supported by name servers.
+This document extends the DNS DELEG record, and SVCB records pointed to by the DELEG record, as defined in {{?I-D.draft-dnsop-deleg}}, with the ability to specify transport protocols and authentication parameters supported by nameservers.
 
 --- middle
 
 # Introduction
 
-The new delegation mechanism based on DELEG record type allows to specify attributes a resolver can use when talking to a delegated authority. This document introduces parameters specific to different transport mechanism than the default udp/53 protocol.
+The new Domain Name System delegation mechanism based on the DELEG record type allows an authoritative nameserver to specify attributes a resolver can use when talking to another delegated authority. This document introduces parameters specific to different transport mechanisms than the default DNS protocol transports of udp and tcp to port 53.
 
-Legacy DNS resolvers unaware of DELEG mechanism would continue to use the NS and DS records, while resolvers that understand DELEG and its associated parameters can efficiently switch to new transports.
+Legacy DNS resolvers that are unaware of the DELEG mechanism would continue to use the NS and DS records, while resolvers that understand DELEG and its associated parameters can efficiently switch to new transports.
 
 ## Terminology
 
 The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
 "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and
-"OPTIONAL" in this document are to be interpreted as described in \\
+"OPTIONAL" in this document are to be interpreted as described in
 BCP 14 {{?RFC2119}} {{?RFC8174}} when, and only when, they appear in
 all capitals, as shown here.
 
 Terminology regarding the Domain Name System comes from {{?BCP219}}, with addition terms defined here:
 
-* [tbd]
+* transport parameters	  The set of attributes that define how to reach the nameserver specified in a ServiceMode DELEG record.
 * [tbd]
 
 ## Introductory Examples
 
-To introduce DELEG record with DNS-over-TLS {{?RFC7858}}, this example shows a possible response from an authoritative in the authority section of the DNS response when delegating to another nameserver.
+To use a DELEG record to point a resolver to an authority that supports DNS-over-TLS {{?RFC7858}}, this example shows a possible response from an authoritative server in the Authority section of the DNS response:
 
-
-    example.com.  86400  IN DELEG  1 ns2.example.com. (
+    example.com. 86400  IN DELEG 1 ns2.example.com. (
                     alpn=dot
                     tlsa="2 0 1 ABC..."
                     ipv4hint=192.0.2.54
                     ipv6hint=2001:db8:2423::3 )
-    example.com.  86400  IN NS     ns1.example.com.
-    ns1.example.com.    86400   IN  A  192.0.2.1
-    ns1.example.com     86400   IN  AAAA    2001:DB8::1
+    example.com. 86400  IN NS ns1.example.com.
 
-In this example, the authoritative nameserver is delegating using DNS-over-TLS.
-Like in SVCB, DELEG also offer the ability to use the AliasMode delegation. The example below shows an example where example.com is being delegated with a DELEG AliasMode record which can then be further resolved using standard SVCB to locate the actual parameters.
+The alpn attribute specifies DNS-over-TLS, with the tlsa attribute
+providing the necessary cryptographic material to establish the
+connection.  The ipv4hint and ipv6hint serves the traditional role of
+glue, since the ns2 server lives in the example.com zone.
 
-    example.com.  86400  IN DELEG 0   config2.example.net.
-    example.com.  86400  IN NS     ns1.example.net.
+The Additional section would continue to serve glue records for the
+nameservers within example.com as well, for the benefit of legacy
+resolvers.  Note that these could potentially be the same addresses as
+are used in the hints of a DELEG record; NS and DELEG are orthogonal.
 
-The example.net authoritative server may return the following SVCB records in response to a query as directed by the above records.
+    ns1.example.com. 86400   IN  A      192.0.2.1
+    ns1.example.com  86400   IN  AAAA   2001:DB8::1
+
+As with SVCB, DELEG also offer the ability to use AliasMode for a
+delegation. The example below shows that example.com is
+being delegated with a DELEG AliasMode record which can then be
+further resolved using SVCB to locate the actual parameters.
+
+    example.com.  86400  IN DELEG 0 config2.example.net.
+    example.com.  86400  IN NS      ns1.example.net.
+
+The example.net authoritative server's SVCB record could look like this:
 
     config2.example.net 3600    IN SVCB ns2.example.net. (
-                    alpn=dot
-                    tlsa="2 0 1 ABC..."
-                    ipv4hint=192.0.2.54
-                    ipv6hint=2001:db8:2423::3 )
+                        alpn=dot
+                        tlsa="2 0 1 ABC..."
+                        ipv4hint=192.0.2.54
+                        ipv6hint=2001:db8:2423::3 )
 
-The above records indicate to the client that the actual configuration for the example.com zone can be found at config2.example.net.
+This document defines in detail the resolution process using these records.
 
-Later sections of this document will go into more detail on the resolution process using these records.
+## SvcParams
 
-## Goal of the DELEG record
+All SvcParamKeys for the "dns" scheme from SVCB-DNS {{?RFC9461}} apply as specified.  These are the "transport parameters", attributes describing how to reach an endpoint.
 
-The primary goal of transport specification in DELEG records is to provide zone owners a way to signal to new clients how to connect to servers serving a child domain that can coexist with NS records in the same zone, and do not break software that does not support new transports.
-
-### SvcParams
-
-All SvcParamKeys for the "dns" scheme {{?9461}} apply as specified.  These are the "transport parameters", describing how to reach an endpoint.
-
-The "alpn" transport parameter is OPTIONAL to include (unlike in SVCB-DNS, where it is generally required).  If the "alpn" SvcParamKey is omitted, the only available transport is presumed to be unencrypted DNS over UDP/TCP port 53.  Endpoints can indicate that insecure transport is not available by specifying "mandatory=alpn".
+The "alpn" transport parameter is OPTIONAL to include, unlike in SVCB-DNS, where it is generally required.  If the "alpn" SvcParamKey is omitted, the only available transport is presumed to be unencrypted DNS over UDP/TCP port 53.  Endpoints can indicate that insecure transport is not available by specifying "mandatory=alpn". [Why do we not require do53 to be explicit?]
 
 When TargetName is below the zone cut, DELEG ServiceMode records MUST include "ipv4hint" or "ipv6hint" SvcParamKeys.  These keys provide the address glue, which enables the initial connection to this endpoint.
 
-The following additional DNS SVCB parameters are defined for the DELEG and SVCB ServiceModes.
+The following additional SVCB-DNS parameters are defined for the DELEG and SVCB ServiceModes.
 
-#### "tlsa"
+### tlsa
 
 The "tlsa" SvcParamKey is a transport parameter representing a TLSA RRset {{?RFC6698}} to be used when connecting to TargetName using a TLS-based transport. If present, this SvcParam SHOULD match the TLSA records whose base domain ({{?RFC6698, Section 3}}) is TargetName. Due to bootstrapping concerns, this SvcParamKey has been added to the DELEG record as the TLSA records might only be resolveable after the initial connection to the delegated nameserver was established. When this field is not present, certificate validation should be performed by either DANE or by traditional TLS certification validation using trusted root certification authorities.
 
@@ -186,8 +192,8 @@ To avoid a circular dependency, "tlsa" MUST appear in any DELEG record that is u
 Resolvers that support TLS-based transports MUST adopt one of the following behaviors:
 
 1. Use DANE for authentication, and treat any endpoints lacking DANE support as incompatible.
-1. Use PKI for authentication, and treat any DANE-only endpoint as incompatible.  In this behavior, compatibility with `tlsa=disabled` endpoints is REQUIRED.
-1. Support both DANE and PKI for authentication, preferring DANE if it is available for each endpoint.
+2. Use PKI for authentication, and treat any DANE-only endpoint as incompatible.  In this behavior, compatibility with `tlsa=disabled` endpoints is REQUIRED.
+3. Support both DANE and PKI for authentication, preferring DANE if it is available for each endpoint.
 
 This SvcParamKey MAY be used in any SVCB context where TLSA usage is defined.
 
@@ -200,6 +206,9 @@ alpn=doq tlsa="..." mandatory=alpn
 ;; services.  All resolvers can access it, but only resolvers with
 ;; DANE support will use DoQ.
 alpn=doq tlsa="..."
+[... how does this signal that it also offers do53? Is the though that it is
+  because only this draft specifies alpn and the core draft doesn't (currently)
+  have a method to explicitly signal do53?  Maybe it should... ]
 
 ;; The server is authenticatable via PKI.  If TLSA records exist at
 ;; the SVCB-DANE owner names, it is also authenticatable via DANE.
@@ -212,31 +221,33 @@ alpn=doq tlsa=disabled mandatory=alpn
 ~~~
 {: title="tlsa SvcParam Examples for DELEG"}
 
+## Resolution procedure
+
+As specified in {{?I-D.draft-dnsop-deleg}}, the ServiceMode DELEG records provide a weak signal from the operator about which transport mechanisms they would most prefer clients to use, but it is not mandatory that resolvers try the delegated servers in priority order.  It might not even be possible for a resolver to do, such as if the highest priority record specifies an alpn that the resolver does not implement, but a lower priority record has an alpn that it can use.
+
+Thus, as with authority server selection for NS records, a resolver is free to use its own policy implementation to determine which servers to continue to use for resolution.
+
+If a connection error occurs when a resolver attempts to access a nameserver delegated to by a DELEG or SVCB record, such as with a certificate mismatch or by being unreachable, the resolver SHOULD attempt to connect to the other nameservers in the DELEG/SVCB RRset to until either exhausting the list or the resolver's policy indicates that they should treat the resolution as failed.
+
+Operators MAY return SERVFAIL when all attempts to use the DELEG/SVCB resolution process have failed.  This might have privacy benefits, especially if the DELEG records only offer encrypted transports.  More permissive resolvers can fall back to using the legacy DNS resolution process via NS records.
+
 ## Deployment Considerations
 
-The DELEG and SVCB records intends to replace the NS record while also adding additional functionality in order to support additional transports for the DNS. Below are discussions of considerations for deployment.
+DELEG and SVCB records are intended to be the best method for modern resolvers to use delegation information for zones.
 
-### Availability
-
-If a zone operator removes all NS records before DELEG and SVCB records are implemented by all clients, the availability of their zones will be impacted for the clients that are using non-supporting resolvers. In some cases, this may be a desired quality, but should be noted by zone owners and operators.
+Realistically, however, legacy resolvers will continue to exist on the Internet for a long time to come.  If a zone operator removes all NS records, the availability of their zones will be impacted for the clients that are using non-supporting resolvers. In some cases, this may be a desired quality, but should be noted by zone owners and operators.
 
 # Privacy Considerations
 
-All of the information handled or transmitted by this protocol is public information published in the DNS.
+All of the information transmitted by this protocol is public information published in the DNS.
 
 # Security Considerations
 
-TODO: Fill this section out
+No new security risks are introduced by this specification.  [Too bold to say?]
 
-## Resolution procedure
+The primary security considerations of DNS operators and domain owners are whether they should enable more secure transports for their domains, and how they want resolution to be handled if the secure transport is not available.
 
-TODO: Define how resolver selects which server connect to, especially when faced with selection of multiple transports. I's probably resolver's policy decision, but it should be said explicitly.
-
-### Connection Failures
-
-When a resolver attempts to access nameserver delegated by a DELEG or SVCB record, if a connection error occurs, such as a certificate mismatch or unreachable server, the resolver SHOULD attempt to connect to the other nameservers delegated to until either exhausting the list or the resolver's policy indicates that they should treat the resolution as failed.
-
-The failure action when failing to resolve a name with DELEG/SVCB due to connection errors is dependent on the resolver operators policies. For resolvers which strongly favor privacy, the operators may wish to return a SERVFAIL when the DELEG/SVCB resolution process completes without successfully contacting a delegated nameserver(s) while opportunistic privacy resolvers may wish to attempt resolution using any NS records that may be present.
+Similarly, resolvers should be considering whether they will use secure transport mechanisms, and if so how strongly they want to enforce their usage.
 
 # IANA Considerations
 
