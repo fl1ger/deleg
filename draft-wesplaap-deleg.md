@@ -160,9 +160,9 @@ A DELEG RRset MAY be present at a delegation point.  The DELEG RRset MAY contain
 
 A DELEG RRset MAY be present with or without NS or DS RRsets at the delegation point. 
 
-An authoritative server that is DELEG aware MUST put all DELEG resource records for the delegation into the authority section when the resolver has signalled DELEG support. 
+An authoritative server that is DELEG aware MUST put all DELEG resource records for the delegation into the authority section when the resolver has signalled DELEG support. It MAY also supply DELEG records in the response when not receiving a request with the DE bit.
 
-A resolver that is DELEG aware MUST signal its support when iterating and MUST use the DELEG records in the referral response.
+A resolver that is DELEG aware MUST initial signal its support by sending the DE bit when iterating and MUST use the DELEG records in the referral response. The resolver MAY deploy fallback in case of unresponsive authorities.
 
 ## Signaling DELEG support
 
@@ -200,6 +200,20 @@ For the RDATA parameters to a DELEG RR, the DNS Service Bindings (SVCB) registry
 
 --- back
 
+#  Example
+
+Here is an example of the zone content off the com zone for a delegation for example.com with DELEG and NS records:
+
+    example.com.  86400  IN DELEG  1 ns1.example.com. (
+                    ipv4hint=192.0.2.1 ipv6hint=2001:DB8::1 )
+    example.com.  86400  IN DELEG  0 ns2.example.net.
+    example.com.  86400  IN DELEG  0 ns3.example.org.
+    example.com.  86400  IN NS     ns1.example.com.
+    example.com.  86400  IN NS     ns2.example.net.
+    example.com.  86400  IN NS     ns3.example.org.
+    ns1.example.com.    86400   IN  A  192.0.2.1
+    ns1.example.com     86400   IN  AAAA    2001:DB8::1
+     
 # Acknowledgments {:unnumbered}
 
 This document is heavily based on past work done by Tim April in 
