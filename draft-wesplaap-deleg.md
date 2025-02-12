@@ -160,9 +160,11 @@ A DELEG RRset MAY be present at a delegation point.  The DELEG RRset MAY contain
 
 A DELEG RRset MAY be present with or without NS or DS RRsets at the delegation point. 
 
-An authoritative server that is DELEG aware MUST put all DELEG resource records for the delegation into the authority section when the resolver has signalled DELEG support. It MAY also supply DELEG records in the response when not receiving a request with the DE bit.
+An authoritative server that is DELEG aware MUST put all DELEG resource records for the delegation into the authority section when the resolver has signalled DELEG support. It SHOULD NOT supply DELEG records in the response when receiving a request without the DE bit.
 
-A resolver that is DELEG aware MUST initial signal its support by sending the DE bit when iterating and MUST use the DELEG records in the referral response. The resolver MAY deploy fallback in case of unresponsive authorities.
+If the delegation does not have DELEG records the authoritative server MUST send the NS records and, if the zone is DNSSEC signed, prove the absence of the DELEG RRSet.
+
+A resolver that is DELEG aware MUST signal its support by sending the DE bit when iterating and MUST use the DELEG records in the referral response. 
 
 ## Signaling DELEG support
 
@@ -174,7 +176,7 @@ This bit is referred to as the "DELEG" (DE) bit.  In the context of the EDNS0 OP
          +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
       0: |   EXTENDED-RCODE      |       VERSION         |
          +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
-      2: |DO|DE|                 Z                       |
+      2: |DO|CO|DE|              Z                       |
          +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
 
 Setting the DE bit to one in a query indicates to the server that the resolver is able to accept delegations using DELEG only. The DE bit cleared (set to zero) indicates the resolver is unprepared to handle DELEG and hence can only be served NS, DS and glue in a delegation response. The DE bit of the query MUST be copied in the response.
@@ -184,7 +186,7 @@ Setting the DE bit to one in a query indicates to the server that the resolver i
 
 As the DELEG record is authoritative in the parent zone of a zone cut similar to DS it has to be signed in the parent zone. 
 
-In order for the validator to understand that the delegation uses DELEG this draft introduces a new DNSKEY flag TBD. When this flag is set for the key that signs the DS or DELEG record, usually the zone signing key (ZSK), a authenticated denial of existence MUST be send with the referral response, so that a DELEG aware validator can prove the existence or absence of a DELEG record and detect a downgrade attack.
+In order for the validator to understand that the delegation uses DELEG this draft introduces a new DNSKEY flag TBD. When this flag is set for the key that signs the DS or DELEG record, usually the zone signing key (ZSK), and the request has signalled that it understands DELEG an authenticated denial of existence MUST be send with the referral response, so that a DELEG aware validator can prove the existence or absence of a DELEG record and detect a downgrade attack.
 
 A Validating Stub Resolver that is DELEG aware has to use a Security-Aware Resolver that is DELEG aware and if it is behind a forwarder this has to be security and DELEG aware as well.
 
@@ -200,12 +202,12 @@ For the RDATA parameters to a DELEG RR, the DNS Service Bindings (SVCB) registry
 
 --- back
 
-#  Example
+#  Examples
 
 Here is an example of the zone content off the com zone for a delegation for example.com with DELEG and NS records:
 
     example.com.  86400  IN DELEG  1 ns1.example.com. (
-                    ipv4hint=192.0.2.1 ipv6hint=2001:DB8::1 )
+                    Glue4=192.0.2.1 Glue6=2001:DB8::1 )
     example.com.  86400  IN DELEG  0 ns2.example.net.
     example.com.  86400  IN DELEG  0 ns3.example.org.
     example.com.  86400  IN NS     ns1.example.com.
@@ -213,6 +215,27 @@ Here is an example of the zone content off the com zone for a delegation for exa
     example.com.  86400  IN NS     ns3.example.org.
     ns1.example.com.    86400   IN  A  192.0.2.1
     ns1.example.com     86400   IN  AAAA    2001:DB8::1
+    
+Another example of a referral answer of a DELEG aware authority using the signed content above to delegate example.com. The actual cryptographic data is abbreviated:
+
+    example.com.  86400 IN DELEG  1 ns1.example.com. (
+                Glue4=192.0.2.1 Glue6=2001:DB8::1 )
+    example.com.  86400 IN DELEG  0 ns2.example.net.
+    example.com.  86400 IN DELEG  0 ns3.example.org.
+    example.com.  86400 IN RRSIG DELEG 13 4 3600 (
+                              20250214164848 20250207134348 21261 com. 
+                              cqWc7J.... ==)
+    example.com.  86400 IN DS 65163 13 2 (
+                              5F86F2F3AE2B02... )
+    example.com.  86400 IN RRSIG DS 13 4 3600 (
+                              20250214164848 20250207134348 21261 com. 
+                              cqWc7J.... ==)
+    example.com.  86400 IN	NSEC \000example.com. NS DS RRSIG NSEC DELEG
+    example.com.  86400 IN RRSIG NSEC 13 4 3600 (
+                              20250214164848 20250207134348 21261 com. 
+                              cqWc7J.... ==)
+                              
+
      
 # Acknowledgments {:unnumbered}
 
@@ -226,6 +249,10 @@ RFC EDITOR:
 : PLEASE REMOVE THE THIS SECTION PRIOR TO PUBLICATION.
 
 * Write a security considerations section
+* Change the parameters form temporary to permanent once IANA assigned. Temporary use:
+  * DELEG QType code is 65432
+  * DELEG EDNS Flag Bit is 3
+  * DELEG DNSKEY Flag Bit is 0
 
 # Change Log
 
@@ -241,3 +268,5 @@ RFC EDITOR:
 ## since draft-wesplaap-deleg-01
 
 * Reorganised and streamlined the draft to the bare mininum for DELEG as an NS replacement
+* Defined codepoints for temporary testing
+* Added examples
