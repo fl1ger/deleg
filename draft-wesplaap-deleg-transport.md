@@ -1,17 +1,16 @@
 ---
-title: Extensible Delegation for DNS
+title: Extensible Delegation for DNS using different transport protocols
 abbrev: DELEG
-docname: draft-dnsop-deleg-transport-latest
+docname: draft-wesplaap-deleg-transport-latest
 date: {DATE}
 category: std
 
 ipr: trust200902
-workgroup: dnsop
+submissiontype: IETF
 area: Internet
-category: info
 keyword: Internet-Draft
 
-stand_alone: no
+stand_alone: yes
 pi: [toc, sortrefs, symrefs]
 
 author:
