@@ -42,7 +42,7 @@
     <abstract>
       <?line 113?>
 <t>A delegation in the Domain Name System (DNS) is a mechanism that enables efficient and distributed management of the DNS namespace. It involves delegating authority over subdomains to specific DNS servers via NS records, allowing for a hierarchical structure and distributing the responsibility for maintaining DNS records.</t>
-      <t>An NS record contains the hostname of the nameserver for the delegated namespace. Any facilities of that nameserver must be discovered through other mechanisms. This document proposes a new extensible DNS record type, DELEG, for delegation the authority for a domain. Future documents then can use this mechanism to use additional information about the delegated namespace and the capabilities of authoritative nameservers for the delegated namespace.</t>
+      <t>An NS record contains the hostname of the nameserver for the delegated namespace. Any facilities of that nameserver must be discovered through other mechanisms. This document proposes a new extensible DNS record type, DELEG, for delegation of the authority for a domain. Future documents then can use this mechanism to use additional information about the delegated namespace and the capabilities of authoritative nameservers for the delegated namespace.</t>
     </abstract>
   </front>
   <middle>
@@ -90,7 +90,7 @@ all capitals, as shown here.</t>
             <t>There can be multiple INCLUDE DELEG records, but further indirections through SVCB records have to comply with <xref target="RFC9460"/> in that there can be only one AliasMode SVCB record per name.</t>
           </li>
           <li>
-            <t>In order to not allow unbound indirection of DELEG records the maximum number of indirections, CNAME or AliasMode SVCB is 4.</t>
+            <t>In order to not allow unbounded indirection of DELEG records the maximum number of indirections, CNAME or AliasMode SVCB is 4.</t>
           </li>
           <li>
             <t>The SVCB IPv4hint and IPv6hint parameters keep their key values of 4 and 6, but the presentation format with DELEG MUST be Glue4 and Glue6.</t>
