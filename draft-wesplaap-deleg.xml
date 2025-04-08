@@ -129,7 +129,7 @@ all capitals, as shown here.</t>
       <section anchor="dnssec">
         <name>DNSSEC</name>
         <t>As the DELEG record is authoritative in the parent zone of a zone cut similar to DS it has to be signed in the parent zone.</t>
-        <t>In order for the validator to understand that the delegation uses DELEG this draft introduces a new DNSKEY flag TBD. When this flag is set for the key that signs the DS or DELEG record, usually the zone signing key (ZSK), and the request has signalled that it understands DELEG an authenticated denial of existence MUST be send with the referral response, so that a DELEG aware validator can prove the existence or absence of a DELEG record and detect a downgrade attack.</t>
+        <t>In order for the validator to understand that the delegation uses DELEG this draft introduces a new DNSKEY flag TBD. When this flag is set for the key that signs the DS or DELEG record, usually the zone signing key (ZSK), and the requester has signalled that it understands DELEG an authenticated denial of existence MUST be send with the referral response, so that a DELEG aware validator can prove the existence or absence of a DELEG record and detect a downgrade attack.</t>
         <t>A Validating Stub Resolver that is DELEG aware has to use a Security-Aware Resolver that is DELEG aware and if it is behind a forwarder this has to be security and DELEG aware as well.</t>
       </section>
     </section>
