@@ -113,7 +113,7 @@ contributor:
 --- abstract
 A delegation in the Domain Name System (DNS) is a mechanism that enables efficient and distributed management of the DNS namespace. It involves delegating authority over subdomains to specific DNS servers via NS records, allowing for a hierarchical structure and distributing the responsibility for maintaining DNS records.
 
-An NS record contains the hostname of the nameserver for the delegated namespace. Any facilities of that nameserver must be discovered through other mechanisms. This document proposes a new extensible DNS record type, DELEG, for delegation the authority for a domain. Future documents then can use this mechanism to use additional information about the delegated namespace and the capabilities of authoritative nameservers for the delegated namespace.
+An NS record contains the hostname of the nameserver for the delegated namespace. Any facilities of that nameserver must be discovered through other mechanisms. This document proposes a new extensible DNS record type, DELEG, for delegation of the authority for a domain. Future documents then can use this mechanism to use additional information about the delegated namespace and the capabilities of authoritative nameservers for the delegated namespace.
 --- middle
 
 # Introduction
@@ -147,7 +147,7 @@ The DELEG record uses a new resource record type, whose contents are identical t
 * INCLUDE and DIRECT delegation can be mixed within an RRSet
 * The final INCLUDE target is an SVCB record, though there can be further indirection using CNAME or AliasMode SVCB records.
 * There can be multiple INCLUDE DELEG records, but further indirections through SVCB records have to comply with {{?RFC9460}} in that there can be only one AliasMode SVCB record per name.
-* In order to not allow unbound indirection of DELEG records the maximum number of indirections, CNAME or AliasMode SVCB is 4.
+* In order to not allow unbounded indirection of DELEG records the maximum number of indirections, CNAME or AliasMode SVCB is 4.
 * The SVCB IPv4hint and IPv6hint parameters keep their key values of 4 and 6, but the presentation format with DELEG MUST be Glue4 and Glue6.
 * Glue4 and Glue6 records when present MUST be used to connect to the delegated name server.
 * The target of a DELEG record MUST NOT be '.' and for INCLUDE must be outside of the delegated domain and for DIRECT in domain delegations below the zone cut.
@@ -186,7 +186,7 @@ Setting the DE bit to one in a query indicates to the server that the resolver i
 
 As the DELEG record is authoritative in the parent zone of a zone cut similar to DS it has to be signed in the parent zone. 
 
-In order for the validator to understand that the delegation uses DELEG this draft introduces a new DNSKEY flag TBD. When this flag is set for the key that signs the DS or DELEG record, usually the zone signing key (ZSK), and the request has signalled that it understands DELEG an authenticated denial of existence MUST be send with the referral response, so that a DELEG aware validator can prove the existence or absence of a DELEG record and detect a downgrade attack.
+In order for the validator to understand that the delegation uses DELEG this draft introduces a new DNSKEY flag TBD. When this flag is set for the key that signs the DS or DELEG record, usually the zone signing key (ZSK), and the requester has signalled that it understands DELEG an authenticated denial of existence MUST be send with the referral response, so that a DELEG aware validator can prove the existence or absence of a DELEG record and detect a downgrade attack.
 
 A Validating Stub Resolver that is DELEG aware has to use a Security-Aware Resolver that is DELEG aware and if it is behind a forwarder this has to be security and DELEG aware as well.
 
