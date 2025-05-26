@@ -208,10 +208,10 @@ The following example shows an excerpt from a signed root zone. It shows the del
 
 The "example." delegation has DELEG and NS records. The "test." delegation has DELEG but no NS records.
 
-    example.   300 IN DELEG 1 a.example. Glue4=192.0.2.1 (
+    example.   300 IN DELEG DIRECT a.example. Glue4=192.0.2.1 (
                             Glue6=2001:DB8::1 )
-    example.   300 IN DELEG 0 ns2.example.net.
-    example.   300 IN DELEG 0 ns3.example.org.
+    example.   300 IN DELEG INCLUDE ns2.example.net.
+    example.   300 IN DELEG INCLUDE ns3.example.org.
     example.   300 IN RRSIG DELEG 13 4 300 20250214164848 (
                             20250207134348 21261 . HyDHYVT5KcqWc7J..= )
     example.   300 IN NS    a.example.
@@ -228,7 +228,7 @@ The "example." delegation has DELEG and NS records. The "test." delegation has D
 
 The "test." delegation point has a DELEG record and no NS record.
     
-    test.      300 IN DELEG 0 ns2.example.net
+    test.      300 IN DELEG INCLUDE ns2.example.net
     test.      300 IN RRSIG DELEG 13 4 300 20250214164848 (
                             20250207134348 21261 . 98Aac9f7A1Ac26Q..= ) 
     test.      300 IN NSEC  a.test. RRSIG NSEC DELEG
@@ -345,10 +345,10 @@ foo.test.   IN MX
     ;; (empty)
 
     ;; Authority  
-    example.   300 IN DELEG 1 a.example. Glue4=192.0.2.1 (
+    example.   300 IN DELEG DIRECT a.example. Glue4=192.0.2.1 (
                             Glue6=2001:DB8::1 )
-    example.   300 IN DELEG 0 ns2.example.net.
-    example.   300 IN DELEG 0 ns3.example.org.
+    example.   300 IN DELEG INCLUDE ns2.example.net.
+    example.   300 IN DELEG INCLUDE ns3.example.org.
 
     ;; Additional   
     ;; (empty)  
@@ -365,7 +365,7 @@ foo.test.   IN MX
     ;; (empty)
 
     ;; Authority  
-    test.      300 IN DELEG 0 ns2.example.net
+    test.      300 IN DELEG INCLUDE ns2.example.net
 
     ;; Additional   
     ;; (empty)    
@@ -387,10 +387,10 @@ foo.test.   IN MX
     
     ;; Authority  
         
-    example.   300 IN DELEG 1 a.example. Glue4=192.0.2.1 (
+    example.   300 IN DELEG DIRECT a.example. Glue4=192.0.2.1 (
                             Glue6=2001:DB8::1 )
-    example.   300 IN DELEG 0 ns2.example.net.
-    example.   300 IN DELEG 0 ns3.example.org.
+    example.   300 IN DELEG INCLUDE ns2.example.net.
+    example.   300 IN DELEG INCLUDE ns3.example.org.
     example.   300 IN RRSIG DELEG 13 4 300 20250214164848 (
                             20250207134348 21261 . HyDHYVT5KcqWc7J..= )
     example.   300 IN DS    65163 13 2 5F86F2F3AE2B02...  
