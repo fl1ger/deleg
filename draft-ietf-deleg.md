@@ -165,7 +165,7 @@ A DELEG RRset MAY be present at a delegation point.  The DELEG RRset MAY contain
 
 A DELEG RRset MAY be present with or without NS or DS RRsets at the delegation point. 
 
-An authoritative server that is DELEG aware MUST put all DELEG resource records for the delegation into the authority section when the resolver has signalled DELEG support. It SHOULD NOT supply DELEG records in the response when receiving a request without the DE bit.
+An authoritative server that is DELEG aware MUST put all DELEG resource records for the delegation into the authority section when the resolver has signalled DELEG support. It SHOULD NOT supply DELEG records in the response when resolver has not signalled DELEG support.
 
 If the delegation does not have DELEG records the authoritative server MUST send the NS records and, if the zone is DNSSEC signed, prove the absence of the DELEG RRSet.
 
