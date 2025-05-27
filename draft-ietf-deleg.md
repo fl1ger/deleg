@@ -156,7 +156,10 @@ The DELEG record uses a new resource record type, whose contents are identical t
 
 ## Use of DELEG record
 
-The DELEG record creates a zone cut similar to the NS record so all data at or below the zone cut has to be resolved using the name servers defined in the DELEG record. 
+The DELEG record creates a zone cut similar to the NS record:
+
+* Record types defined as authoritative in the child zone MUST be resolved using the name servers defined in the DELEG record.
+* Record types defined as authoritative on the parent side of zone cut (currently DS and DELEG types) retain the same special handling as if zone cut was created by a NS records.
 
 A DELEG RRset MAY be present at a delegation point.  The DELEG RRset MAY contain multiple records. DELEG RRsets MUST NOT appear at a zone's apex.
 
