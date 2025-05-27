@@ -150,7 +150,9 @@ The DELEG record uses a new resource record type, whose contents are identical t
 * In order to not allow unbounded indirection of DELEG records the maximum number of indirections, CNAME or AliasMode SVCB is 4.
 * The SVCB IPv4hint and IPv6hint parameters keep their key values of 4 and 6, but the presentation format with DELEG MUST be Glue4 and Glue6.
 * Glue4 and Glue6 records when present MUST be used to connect to the delegated name server.
-* The target of a DELEG record MUST NOT be '.' and for INCLUDE must be outside of the delegated domain and for DIRECT in domain delegations below the zone cut.
+* The target of any DELEG record MUST NOT be '.'
+* The target of a DELEG INCLUDE record MUST be outside of the delegated domain.
+* The target of a DELEG DIRECT record MUST be a domain below the delegated domain.
 
 ## Use of DELEG record
 
