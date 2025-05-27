@@ -144,7 +144,7 @@ The DELEG record uses a new resource record type, whose contents are identical t
 ## Differences from SVCB
 
 * DELEG can only have two priorities 0 indicating INCLUDE and 1 indicating a DIRECT delegation. These terms MUST be used in the presentation format of the DELEG record.
-* INCLUDE and DIRECT delegation can be mixed within an RRSet
+* INCLUDE and DIRECT delegation can be mixed within an RRSet.
 * The final INCLUDE target is an SVCB record, though there can be further indirection using CNAME or AliasMode SVCB records.
 * There can be multiple INCLUDE DELEG records, but further indirections through SVCB records have to comply with {{?RFC9460}} in that there can be only one AliasMode SVCB record per name.
 * In order to not allow unbounded indirection of DELEG records the maximum number of indirections, CNAME or AliasMode SVCB is 4.
