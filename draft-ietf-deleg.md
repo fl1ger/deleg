@@ -144,23 +144,28 @@ The DELEG record uses a new resource record type, whose contents are identical t
 ## Differences from SVCB
 
 * DELEG can only have two priorities 0 indicating INCLUDE and 1 indicating a DIRECT delegation. These terms MUST be used in the presentation format of the DELEG record.
-* INCLUDE and DIRECT delegation can be mixed within an RRSet
+* INCLUDE and DIRECT delegation can be mixed within an RRSet.
 * The final INCLUDE target is an SVCB record, though there can be further indirection using CNAME or AliasMode SVCB records.
 * There can be multiple INCLUDE DELEG records, but further indirections through SVCB records have to comply with {{?RFC9460}} in that there can be only one AliasMode SVCB record per name.
 * In order to not allow unbounded indirection of DELEG records the maximum number of indirections, CNAME or AliasMode SVCB is 4.
 * The SVCB IPv4hint and IPv6hint parameters keep their key values of 4 and 6, but the presentation format with DELEG MUST be Glue4 and Glue6.
 * Glue4 and Glue6 records when present MUST be used to connect to the delegated name server.
-* The target of a DELEG record MUST NOT be '.' and for INCLUDE must be outside of the delegated domain and for DIRECT in domain delegations below the zone cut.
+* The target of any DELEG record MUST NOT be '.'
+* The target of a DELEG INCLUDE record MUST be outside of the delegated domain.
+* The target of a DELEG DIRECT record MUST be a domain below the delegated domain.
 
 ## Use of DELEG record
 
-The DELEG record creates a zone cut similar to the NS record so all data at or below the zone cut has to be resolved using the name servers defined in the DELEG record. 
+The DELEG record creates a zone cut similar to the NS record:
+
+* Record types defined as authoritative in the child zone MUST be resolved using the name servers defined in the DELEG record.
+* Record types defined as authoritative on the parent side of zone cut (currently DS and DELEG types) retain the same special handling as if zone cut was created by a NS records.
 
 A DELEG RRset MAY be present at a delegation point.  The DELEG RRset MAY contain multiple records. DELEG RRsets MUST NOT appear at a zone's apex.
 
 A DELEG RRset MAY be present with or without NS or DS RRsets at the delegation point. 
 
-An authoritative server that is DELEG aware MUST put all DELEG resource records for the delegation into the authority section when the resolver has signalled DELEG support. It SHOULD NOT supply DELEG records in the response when receiving a request without the DE bit.
+An authoritative server that is DELEG aware MUST put all DELEG resource records for the delegation into the authority section when the resolver has signalled DELEG support. It SHOULD NOT supply DELEG records in the response when resolver has not signalled DELEG support.
 
 If the delegation does not have DELEG records the authoritative server MUST send the NS records and, if the zone is DNSSEC signed, prove the absence of the DELEG RRSet.
 
